@@ -1,0 +1,41 @@
+<!-- pages/menu/menu.wxml -->
+<view class="menu page-pad">
+  <!-- 左侧分类 -->
+  <scroll-view scroll-y class="side">
+    <view wx:for="{{categories}}" wx:key="id"
+          class="side-item {{activeCategory===index?'active':''}}"
+          bindtap="selectCategory" data-index="{{index}}">
+      {{item.name}}
+    </view>
+  </scroll-view>
+
+  <!-- 右侧菜品 -->
+  <scroll-view scroll-y class="main">
+    <view wx:for="{{dishes}}" wx:key="id" class="dish">
+      <view class="dish-img">{{item.name[0]}}</view>
+      <view class="dish-info">
+        <view class="dish-name">{{item.name}}</view>
+        <view class="dish-meta">
+          <text wx:if="{{item.description}}" class="desc">{{item.description}}</text>
+          <van-tag wx:if="{{item.isSoldOut===1}}" plain type="danger">售罄</van-tag>
+        </view>
+        <view class="dish-bottom">
+          <text class="price dish-price">¥{{item.price/100}}</text>
+          <van-button size="mini" type="primary" bindtap="goDetail" data-id="{{item.id}}">选规格</van-button>
+        </view>
+      </view>
+    </view>
+    <van-empty wx:if="{{dishes.length===0}}" description="该分类暂无可点菜品" />
+  </scroll-view>
+
+  <!-- 底部购物车条 -->
+  <view class="cart-bar">
+    <view class="cart-icon" bindtap="goCart">
+      <van-icon name="cart-o" size="44rpx" color="#fff" />
+      <text class="badge" wx:if="{{cartCount>0}}">{{cartCount}}</text>
+    </view>
+    <view class="cart-total"><text class="price">¥{{cartTotal/100}}</text></view>
+    <van-button type="primary" class="bar-btn" bindtap="goCart">去结算</van-button>
+    <van-button type="warning" class="bar-btn" bindtap="callWaiter">呼叫</van-button>
+  </view>
+</view>

@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>点餐小程序 PRD（中餐单店版 · v1）</title>
+<style>
+  :root{
+    --bg:#fff; --ink:#1f2329; --sub:#5b6168; --line:#e7e9ee;
+    --brand:#e8543f; --brand2:#ff8a3d; --soft:#fff4ef;
+    --c-blue:#185FA5; --c-bluebg:#eef6ff;
+    --ok:#2f9e6b; --warn:#d9822b; --late:#7a808a;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,"PingFang SC","Microsoft YaHei",Segoe UI,sans-serif;
+    color:var(--ink);background:#f5f6f8;line-height:1.65;}
+  .wrap{max-width:1000px;margin:0 auto;padding:30px 20px 90px;}
+  .hero{background:linear-gradient(135deg,var(--brand),var(--brand2));color:#fff;
+    border-radius:18px;padding:30px 32px;box-shadow:0 10px 30px rgba(232,84,63,.22)}
+  .hero h1{margin:0 0 6px;font-size:25px}
+  .hero p{margin:2px 0;opacity:.95;font-size:13px}
+  .metagrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:16px}
+  .meta{background:rgba(255,255,255,.16);border-radius:10px;padding:10px 12px}
+  .meta b{display:block;font-size:13px}
+  .meta span{font-size:11px;opacity:.9}
+  .part{background:var(--bg);border:1px solid var(--line);border-radius:14px;
+    padding:26px 30px;margin-top:22px;box-shadow:0 2px 8px rgba(20,30,60,.04)}
+  .part.tag-c{background:linear-gradient(180deg,#fff,#fffaf8)}
+  .part.tag-b{background:linear-gradient(180deg,#fff,#f7fbff)}
+  h2{font-size:20px;margin:0 0 6px;padding-left:12px;border-left:4px solid var(--brand)}
+  h3{font-size:16px;margin:22px 0 8px;color:var(--ink)}
+  h4{font-size:14px;margin:16px 0 6px;color:var(--brand);}
+  p,li{font-size:13.5px;color:#33383f}
+  .lead{color:var(--sub);font-size:13.5px;margin:4px 0 12px}
+  table{width:100%;border-collapse:collapse;margin:10px 0;font-size:13px}
+  th,td{border:1px solid var(--line);padding:9px 11px;text-align:left;vertical-align:top}
+  th{background:#fafbfc;color:var(--sub);font-weight:600}
+  tr:nth-child(even) td{background:#fcfcfd}
+  .pill{display:inline-block;padding:2px 9px;border-radius:10px;font-size:11.5px;font-weight:500}
+  .p0{background:#e9f7ef;color:var(--ok)} .p1{background:#fff5e6;color:var(--warn)}
+  .p2{background:#eef1f6;color:var(--late)}
+  .fn{border-left:3px solid var(--brand2);background:var(--soft);border-radius:8px;
+    padding:10px 14px;margin:8px 0;font-size:13px;color:#6a4a3a}
+  .flow{background:#fafbfc;border:1px dashed var(--line);border-radius:8px;padding:10px 14px;
+    margin:6px 0;font-size:13px;color:#444}
+  .flow b{color:var(--brand)}
+  .card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin:12px 0}
+  .card h4{margin-top:0}
+  .kv{display:grid;grid-template-columns:120px 1fr;gap:4px 10px;font-size:13px;margin:6px 0}
+  .kv div:nth-child(odd){color:var(--sub)}
+  ul.clean{list-style:none;padding:0;margin:6px 0}
+  ul.clean li{padding:5px 0 5px 20px;position:relative;border-bottom:1px dashed var(--line)}
+  ul.clean li:last-child{border-bottom:none}
+  ul.clean li:before{content:"";position:absolute;left:3px;top:12px;width:6px;height:6px;border-radius:50%;background:var(--brand)}
+  .toc{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+  .toc a{background:#fff;border:1px solid var(--line);border-radius:20px;padding:5px 13px;font-size:12.5px;color:var(--brand);text-decoration:none}
+  .toc a:hover{background:var(--soft)}
+  footer{color:var(--sub);font-size:12px;text-align:center;margin-top:30px}
+  @media(max-width:720px){.metagrid{grid-template-columns:repeat(2,1fr)}.kv{grid-template-columns:100px 1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <h1>点餐小程序 PRD（中餐单店版 · v1）</h1>
+    <p>产品需求文档 · 含「小程序（顾客端）PRD」与「后端管理系统 PRD」</p>
+    <div class="metagrid">
+      <div class="meta"><b>产品形态</b><span>微信小程序 + 商家后台</span></div>
+      <div class="meta"><b>业务场景</b><span>中餐单店 · 堂食为主</span></div>
+      <div class="meta"><b>版本</b><span>v1.0（调研后首版）</span></div>
+      <div class="meta"><b>日期</b><span>2026-08-14</span></div>
+    </div>
+  </header>
+
+  <div class="part">
+    <h2>文档导航</h2>
+    <div class="toc">
+      <a href="#p1">一、小程序（顾客端）PRD</a>
+      <a href="#p1-3">功能清单概览</a>
+      <a href="#p2">二、后端管理系统 PRD</a>
+      <a href="#p3">三、公共非功能性需求</a>
+      <a href="#p4">四、里程碑建议</a>
+    </div>
+    <p class="lead">优先级说明：<span class="pill p0">P0</span> 上线必备（MVP）·
+      <span class="pill p1">P1</span> 提升复购/客单价（进阶）·
+      <span class="pill p2">P2</span> 精细化与扩张（远期）。</p>
+  </div>
+
+  <!-- ============ 第一部分 小程序 ============ -->
+  <div class="part tag-c" id="p1">
+    <h2>一、小程序（顾客端）PRD</h2>
+    <p class="lead">面向到店就餐顾客，运行于微信小程序，扫码即用、无需下载。</p>
+
+    <h3>1.1 产品概述</h3>
+    <div class="kv">
+      <div>定位</div><div>中餐单店自助点餐入口，替代纸质菜单与服务员记单</div>
+      <div>目标用户</div><div>到店散客、多人聚餐顾客</div>
+      <div>核心价值</div><div>免排队点餐、中餐个性化口味、多人合单、透明订单进度</div>
+      <div>运行环境</div><div>微信小程序（iOS / Android），需微信登录与微信支付</div>
+    </div>
+
+    <h3>1.2 用户角色</h3>
+    <table>
+      <tr><th>角色</th><th>特征</th><th>典型诉求</th></tr>
+      <tr><td>散客（单人）</td><td>一人一桌或快速用餐</td><td>快速找到想吃的、快速下单付款</td></tr>
+      <tr><td>聚餐多人</td><td>圆桌/包间，多手机同时点</td><td>各自选菜、合单结算、分摊口味备注</td></tr>
+      <tr><td>会员顾客</td><td>已授权手机号/会员</td><td>用积分/优惠券、看历史订单、享会员价</td></tr>
+    </table>
+
+    <h3 id="p1-3">1.3 功能清单概览</h3>
+    <table>
+      <tr><th>模块</th><th>功能</th><th>优先级</th></tr>
+      <tr><td>扫码点餐</td><td>扫桌码进入、自动绑定桌号、多人共享点餐</td><td><span class="pill p0">P0</span></td></tr>
+      <tr><td>菜品浏览</td><td>分类展示、搜索/筛选、热门推荐、售罄标注</td><td><span class="pill p0">P0</span></td></tr>
+      <tr><td>菜品详情</td><td>图文、价格、食材、辣度、规格（份量/辣度/忌口）、库存</td><td><span class="pill p0">P0</span></td></tr>
+      <tr><td>购物车</td><td>增删/数量、实时金额、口味备注、多人合单</td><td><span class="pill p0">P0</span></td></tr>
+      <tr><td>支付</td><td>微信支付、会员余额抵扣、优惠券抵扣</td><td><span class="pill p0">P0</span></td></tr>
+      <tr><td>订单中心</td><td>状态跟踪（待接单→制作中→已上菜→完成）、催菜/加菜/退菜、历史订单</td><td><span class="pill p0">P0</span></td></tr>
+      <tr><td>会员中心</td><td>积分、等级、储值、优惠券、收藏</td><td><span class="pill p1">P1</span></td></tr>
+      <tr><td>预约订座</td><td>选日期/人数/包间、订金支付、排队取号</td><td><span class="pill p1">P1</span></td></tr>
+      <tr><td>外卖/自提</td><td>线上下单、配送范围、到店自提核销</td><td><span class="pill p1">P1</span></td></tr>
+      <tr><td>评价反馈</td><td>餐后评分、文字/图片评价、商家回复</td><td><span class="pill p1">P1</span></td></tr>
+    </table>
+
+    <h3>1.4 功能详述</h3>
+
+    <div class="card">
+      <h4>F-01 扫码点餐与桌台绑定 <span class="pill p0">P0</span></h4>
+      <p><b>功能描述：</b>顾客落座后扫描餐桌二维码，自动进入该门店点餐页并绑定当前桌号，订单直达对应桌台，避免上错菜。支持一桌多人各自扫码、共享同一购物车。</p>
+      <p><b>用户故事：</b>「我坐下后扫桌上的码，直接进入菜单，点的菜自动算在我们这桌，不用喊服务员。」</p>
+      <div class="flow"><b>流程：</b>顾客扫码 → 解析桌号/门店 → 进入点餐首页（已绑定桌台）→ 多人可同时加入该桌购物车 → 一人结算。</div>
+      <div class="fn">规则：① 桌码唯一对应一个桌台；② 多人同时点餐时购物车实时合并，最后由任一人统一支付；③ 若扫码失败，支持手动输入桌号；④ 绑定后订单状态推送至该桌顾客与后厨。</div>
+    </div>
+
+    <div class="card">
+      <h4>F-02 菜品浏览与分类 <span class="pill p0">P0</span></h4>
+      <p><b>功能描述：</b>按中餐品类清晰分类展示，支持搜索、销量/价格排序、热门推荐位，售罄菜品自动灰显标注。</p>
+      <div class="kv">
+        <div>默认分类</div><div>热菜 / 凉菜 / 汤品 / 主食 / 小吃 / 饮品（可配置）</div>
+        <div>特色分类</div><div>店长推荐 / 热销榜 / 今日特价 / 套餐</div>
+        <div>筛选</div><div>关键词搜索、辣度筛选、价格区间、素/荤</div>
+      </div>
+      <div class="fn">规则：售罄菜品标注「已售罄」且不可加入购物车；分类 Tab 可横向滑动，适配菜品多的中餐场景。</div>
+    </div>
+
+    <div class="card">
+      <h4>F-03 菜品详情与规格（中餐特色） <span class="pill p0">P0</span></h4>
+      <p><b>功能描述：</b>每道菜展示高清图、名称、价格、简介、食材配料、辣度、销量；支持多规格与口味选择，满足中餐个性化需求。</p>
+      <div class="kv">
+        <div>规格-份量</div><div>大份 / 小份 / 半份（如「半份¥18·整份¥32」），不同规格不同价</div>
+        <div>规格-辣度</div><div>微辣 / 中辣 / 特辣 / 免辣（川湘菜高频）</div>
+        <div>忌口备注</div><div>预设：免葱 / 免蒜 / 少盐 / 多放醋 + 自由文本输入</div>
+        <div>称重(可选)</div><div>海鲜、烤鸭等按斤/按份计价，选择后自动算金额（P1）</div>
+      </div>
+      <div class="fn">规则：规格选项影响最终单价；同一菜品不同规格在购物车中视为独立条目；忌口备注随订单同步至后厨小票。</div>
+    </div>
+
+    <div class="card">
+      <h4>F-04 购物车与多人合单 <span class="pill p0">P0</span></h4>
+      <p><b>功能描述：</b>菜品加入购物车后可增减数量、删除、填写口味备注，底部常驻显示件数与总金额；同一桌多人点的菜合并展示，由一人统一结算（合单支付）。</p>
+      <div class="flow"><b>流程：</b>选菜→加入购物车→（多人同步合并）→查看已点清单→填备注→去结算→确认桌号/菜品/金额→支付。</div>
+      <div class="fn">规则：购物车按桌台维度聚合；合单支付后整单视为同一笔订单，后厨按桌出单；支持「AA 分账」为远期能力（P2）。</div>
+    </div>
+
+    <div class="card">
+      <h4>F-05 订单确认与支付 <span class="pill p0">P0</span></h4>
+      <p><b>功能描述：</b>支付前展示桌号、菜品明细、规格、备注、总价；支持微信支付，可选会员余额/优惠券抵扣。支付成功后订单实时同步后厨。</p>
+      <div class="fn">规则：① 仅微信支付为必选通道；② 优惠券/会员价在结算页自动计算；③ 支付失败订单进入「待支付」状态可重试；④ 支付成功后向商家后台与后厨推送新订单。</div>
+    </div>
+
+    <div class="card">
+      <h4>F-06 订单中心：状态 / 催加退 <span class="pill p0">P0</span></h4>
+      <p><b>功能描述：</b>顾客可查看当前订单进度（待接单→制作中→已上菜→已完成），支持催菜、加菜、退菜申请，并查看历史订单。</p>
+      <div class="kv">
+        <div>状态流转</div><div>待接单 → 制作中 → 已上菜 → 已完成</div>
+        <div>催菜</div><div>一键推送提醒至后厨（限制作中状态）</div>
+        <div>加菜</div><td>在当前桌未结账前可继续加菜下单</td>
+        <div>退菜</div><div>提交退菜申请（口味不符/上错菜），商家后台审核</div>
+      </div>
+      <div class="fn">规则：退菜需商家确认，退款原路返回；加菜视同新子订单但归属同一桌台。</div>
+    </div>
+
+    <div class="card">
+      <h4>F-07 会员中心 <span class="pill p1">P1</span></h4>
+      <p><b>功能描述：</b>微信一键授权成为会员，沉淀积分、等级、储值余额、优惠券；支持收藏常点菜品、查看会员价。</p>
+      <div class="kv">
+        <div>积分</div><div>消费累计（如 1 元=1 分），可兑菜品/优惠券/抵现</div>
+        <div>等级</div><div>普通/银卡/金卡，对应折扣或特权（P1）</div>
+        <div>储值</div><div>预充值赠额，快速回笼资金（P1）</div>
+        <div>优惠券</div><div>新人礼、满减券、生日券集中展示与核销</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>F-08 预约订座与排队 <span class="pill p1">P1</span></h4>
+      <p><b>功能描述：</b>顾客在线选择日期、时间、人数、包间需求并提交订座（可付订金锁定）；高峰期支持远程取号、实时查看排队进度与预估等待。</p>
+      <div class="fn">规则：包间数量有限，建议提前预订；订金在到店消费后抵扣；排队临近叫号时微信通知，减少现场聚集。</div>
+    </div>
+
+    <div class="card">
+      <h4>F-09 外卖 / 自提 <span class="pill p1">P1</span></h4>
+      <p><b>功能描述：</b>提供外卖频道与到店自提：设置配送范围/费用/时间，或顾客线上下单选自提时间、到店凭码核销，降低第三方平台抽佣。</p>
+      <div class="fn">规则：外卖与堂食订单在后台分类显示；自提订单显示取餐码；可对接第三方跑腿配送（P2）。</div>
+    </div>
+
+    <div class="card">
+      <h4>F-10 评价与反馈 <span class="pill p1">P1</span></h4>
+      <p><b>功能描述：</b>餐后对菜品口味、上菜速度、服务评分并留言（可附图），商家可回复，形成互动与改进闭环。</p>
+    </div>
+  </div>
+
+  <!-- ============ 第二部分 后台 ============ -->
+  <div class="part tag-b" id="p2">
+    <h2>二、后端管理系统（商家后台）PRD</h2>
+    <p class="lead">面向门店运营者，形态为 PC 网页后台（可配套移动端查看），与小程序、后厨端共用同一后端数据。</p>
+
+    <h3>2.1 产品概述</h3>
+    <div class="kv">
+      <div>使用者</div><div>老板 / 店长 / 服务员 / 后厨管理员</div>
+      <div>核心价值</div><div>菜品/订单/会员/数据统一管理，驱动复购与降本</div>
+      <div>数据关系</div><div>与小程序、后厨端实时同步同一份订单/菜品/会员数据</div>
+    </div>
+
+    <h3>2.2 用户角色与权限</h3>
+    <table>
+      <tr><th>角色</th><th>权限范围</th></tr>
+      <tr><td>超级管理员（老板）</td><td>全部功能：菜品、订单、会员、营销、数据、员工、支付/打印配置、财务对账</td></tr>
+      <tr><td>店长</td><td>菜品上下架、订单处理、会员运营、营销活动、查看数据报表</td></tr>
+      <tr><td>服务员</td><td>开台/并台/转台、接单确认、标记出餐、桌台状态维护</td></tr>
+      <tr><td>后厨</td><td>查看订单、划菜/出餐、退加菜确认（通过 KDS 或后厨屏）</td></tr>
+    </table>
+
+    <h3>2.3 功能清单概览</h3>
+    <table>
+      <tr><th>模块</th><th>功能</th><th>优先级</th></tr>
+      <tr><td>菜品管理</td><td>分类/菜品/规格/库存/上下架/推荐爆款</td><td><span class="pill p0">P0</span></td></tr>
+      <tr><td>桌台管理</td><td>区域/桌号/容纳人数/状态（空闲·占用·预定·清洁）</td><td><span class="pill p0">P0</span></td></tr>
+      <tr><td>订单管理</td><td>接单/出餐/完成/退改、堂食·外卖·预约分类</td><td><span class="pill p0">P0</span></td></tr>
+      <tr><td>后厨协同</td><td>分档口打印、KDS 厨显、断网缓存、状态回传</td><td><span class="pill p0">P0</span></td></tr>
+      <tr><td>会员管理</td><td>会员资料/等级/储值/积分/优惠券发放</td><td><span class="pill p1">P1</span></td></tr>
+      <tr><td>营销工具</td><td>满减/折扣/拼团/秒杀/新人礼/裂变</td><td><span class="pill p1">P1</span></td></tr>
+      <tr><td>数据报表</td><td>营业额/订单量/热销榜/翻台率/客单价/复购</td><td><span class="pill p1">P1</span></td></tr>
+      <tr><td>员工与权限</td><td>账号、角色、权限分配、操作日志</td><td><span class="pill p1">P1</span></td></tr>
+      <tr><td>基础设置</td><td>门店信息/支付配置/打印机配置/营业时间</td><td><span class="pill p0">P0</span></td></tr>
+    </table>
+
+    <h3>2.4 功能详述</h3>
+
+    <div class="card">
+      <h4>B-01 菜品管理 <span class="pill p0">P0</span></h4>
+      <p><b>功能描述：</b>管理菜品全属性：分类、名称、价格、图片、描述、食材、规格（份量/辣度/忌口选项）、库存、上下架、推荐标签。</p>
+      <div class="kv">
+        <div>字段</div><div>菜品ID、名称、分类、图片、单价、规格组、库存、是否售罄、推荐位、状态</div>
+        <div>批量</div><div>支持批量导入/导出、批量上下架、批量改价（如节日特价）</div>
+      </div>
+      <div class="fn">规则：库存为 0 自动标售罄并同步小程序；规格改动影响历史订单展示需保留快照；套餐作为特殊菜品（含子菜品组合）。</div>
+    </div>
+
+    <div class="card">
+      <h4>B-02 桌台管理 <span class="pill p0">P0</span></h4>
+      <p><b>功能描述：</b>维护餐厅桌台拓扑：区域（大厅/包间）、桌号、容纳人数、当前状态；支持开台、并台、转台、清台。</p>
+      <div class="kv">
+        <div>状态</div><div>空闲 / 占用 / 预定 / 清洁中</div>
+        <div>二维码</div><div>一键生成每桌点餐二维码（印刷或屏显）</div>
+      </div>
+      <div class="fn">规则：占用桌台显示当前订单与就餐人数；并台/转台保持订单归属清晰，防止后厨出单混乱。</div>
+    </div>
+
+    <div class="card">
+      <h4>B-03 订单管理 <span class="pill p0">P0</span></h4>
+      <p><b>功能描述：</b>实时接收新订单并提醒，按堂食/外卖/预约分类；支持接单、标记出餐、完成、退菜/加菜审核、打印小票。</p>
+      <div class="flow"><b>流程：</b>新订单提醒 → 接单（同步后厨）→ 制作 → 标记出餐 → 完成/结账 →（退菜申请→审核→退款）。</div>
+      <div class="fn">规则：订单状态变更实时回传顾客端；退菜需店长/服务员审核；支持订单查询与导出对账。</div>
+    </div>
+
+    <div class="card">
+      <h4>B-04 后厨协同（打印 / KDS） <span class="pill p0">P0</span></h4>
+      <p><b>功能描述：</b>订单自动推送后厨，按档口分单打印（热菜/凉菜/饮品分别出单），可选 KDS 电子厨显；断网时缓存订单、恢复后补打，杜绝漏单。</p>
+      <div class="kv">
+        <div>分档口打印</div><div>菜品指定后厨工位，分类出单，减少人工分单</div>
+        <div>KDS 厨显</div><div>按屏制作、超时变色预警、批量划菜（P1）</div>
+        <div>断网缓存</div><div>网络中断暂存订单，恢复自动补打（关键防漏单）</div>
+      </div>
+      <div class="fn">规则：口味备注/忌口完整同步后厨小票；出餐动作由服务员或后厨在屏上确认，状态回传顾客。</div>
+    </div>
+
+    <div class="card">
+      <h4>B-05 会员管理 <span class="pill p1">P1</span></h4>
+      <p><b>功能描述：</b>查看会员资料、消费记录、等级、储值余额、积分；手动/自动发放优惠券，配置会员价与等级权益。</p>
+      <div class="fn">规则：会员数据来自小程序授权（微信 unionId + 手机号）；储值涉及资金，需与支付商户号对账安全。</div>
+    </div>
+
+    <div class="card">
+      <h4>B-06 营销工具 <span class="pill p1">P1</span></h4>
+      <p><b>功能描述：</b>配置优惠券（满减/折扣/代金/菜品兑换）、满减活动、拼团、秒杀、新人礼包、会员日；设置领取条件、门槛、有效期。</p>
+      <div class="fn">规则：活动与小程序端联动，自动核销；避免过度发券，建议结合数据报表评估 ROI。</div>
+    </div>
+
+    <div class="card">
+      <h4>B-07 数据报表 <span class="pill p1">P1</span></h4>
+      <p><b>功能描述：</b>可视化核心经营指标，辅助决策。</p>
+      <div class="kv">
+        <div>指标</div><div>营业额、订单量、客单价、热销菜品 Top、翻台率、会员复购率、高峰时段</div>
+        <div>维度</div><div>日 / 周 / 月；按分类、按桌台、按会员</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>B-08 员工与权限管理 <span class="pill p1">P1</span></h4>
+      <p><b>功能描述：</b>创建员工账号、分配角色与权限、查看操作日志（退菜/改账/删单等敏感操作可追溯）。</p>
+    </div>
+
+    <div class="card">
+      <h4>B-09 基础设置 <span class="pill p0">P0</span></h4>
+      <p><b>功能描述：</b>门店信息（名称/地址/营业时间）、微信支付商户配置、打印机绑定与分单规则、桌台二维码生成、消息通知模板。</p>
+      <div class="fn">规则：支付配置错误将导致全店无法收款，需上线前重点校验；打印机配置需与档口分单规则一致。</div>
+    </div>
+  </div>
+
+  <!-- ============ 第三部分 非功能 ============ -->
+  <div class="part">
+    <h2 id="p3">三、公共非功能性需求</h2>
+    <table>
+      <tr><th>类别</th><th>要求</th></tr>
+      <tr><td>性能</td><td>用餐高峰期（午晚市）支持高并发下单；下单到后厨出单延迟 &lt; 3s；页面加载 &lt; 1.5s</td></tr>
+      <tr><td>可用性</td><td>后厨断网时订单本地缓存、恢复后自动补打；核心流程不依赖弱网</td></tr>
+      <tr><td>安全</td><td>微信支付走官方通道；用户手机号/支付信息加密存储；后台按角色权限隔离数据</td></tr>
+      <tr><td>合规</td><td>小程序需企业主体认证 + 微信支付商户号；用户隐私政策与授权合规</td></tr>
+      <tr><td>兼容性</td><td>覆盖 iOS / Android 主流微信版本；后台适配现代 PC 浏览器</td></tr>
+      <tr><td>扩展性</td><td>预留外卖对接、多门店、供应链接口，便于后续升级</td></tr>
+    </table>
+  </div>
+
+  <!-- ============ 第四部分 里程碑 ============ -->
+  <div class="part">
+    <h2 id="p4">四、里程碑建议（分阶段落地）</h2>
+    <table>
+      <tr><th>阶段</th><th>目标</th><th>范围（小程序 + 后台）</th></tr>
+      <tr>
+        <td><b>MVP（P0）</b></td>
+        <td>跑通堂食点餐闭环</td>
+        <td>扫码点餐+桌台绑定、菜品分类/规格/忌口、购物车+多人合单、微信支付、订单状态+催加退、后厨分单打印、菜品/桌台/订单/基础设置管理</td>
+      </tr>
+      <tr>
+        <td><b>进阶（P1）</b></td>
+        <td>提升复购与客单价</td>
+        <td>会员积分/等级/储值、优惠券/满减/拼团、套餐、预约订座/排队、外卖自提、评价、数据报表、员工权限、KDS 厨显</td>
+      </tr>
+      <tr>
+        <td><b>远期（P2）</b></td>
+        <td>精细化与扩张</td>
+        <td>外卖对接第三方配送、分销裂变、多门店、供应链进销存、称重计价深化、菜品文化故事</td>
+      </tr>
+    </table>
+    <div class="fn">建议：单店起步优先交付 MVP（约 2–4 周，若用 SaaS 则可当天配置上线），验证后再迭代 P1；P2 视经营规模决定。</div>
+  </div>
+
+  <footer>
+    本 PRD 为 v1 首版，基于前期点餐小程序功能调研整理，供产品规划与选型/开发评估使用。<br>
+    后续可进入原型设计（UI 草图）与技术方案评估。
+  </footer>
+
+</div>
+</body>
+</html>

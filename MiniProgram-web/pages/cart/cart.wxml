@@ -1,0 +1,41 @@
+<!-- pages/cart/cart.wxml -->
+<view class="cart page-pad">
+  <view class="hint" wx:if="{{tableId}}">堂食 · 桌台 #{{tableId}}</view>
+  <view class="hint" wx:else>自提 / 外带</view>
+
+  <view class="item" wx:for="{{items}}" wx:key="skuId">
+    <view class="item-img">{{item.name[0]}}</view>
+    <view class="item-info">
+      <view class="item-name">{{item.name}}</view>
+      <view class="item-spec muted" wx:if="{{item.specsText}}">{{item.specsText}}</view>
+      <view class="item-spec muted" wx:if="{{item.remark}}">备注:{{item.remark}}</view>
+      <view class="item-bottom">
+        <text class="price">¥{{item.price/100}}</text>
+        <van-stepper value="{{item.qty}}" min="1" integer
+                     data-skuid="{{item.skuId}}" data-remark="{{item.remark}}" bind:change="onQty" />
+      </view>
+    </view>
+    <van-icon name="delete-o" size="36rpx" color="#999" class="del"
+              data-skuid="{{item.skuId}}" data-remark="{{item.remark}}" bindtap="remove" />
+  </view>
+
+  <van-empty wx:if="{{items.length===0}}" description="购物车是空的" />
+
+  <!-- 优惠券选择 -->
+  <view class="coupon-bar" wx:if="{{coupons.length}}" bindtap="toggleCoupons">
+    <text>优惠券</text>
+    <text class="coupon-text">{{couponText}} ›</text>
+  </view>
+  <view class="coupon-list" wx:if="{{showCoupons && coupons.length}}">
+    <view class="coupon-opt {{couponId===null ? 'on' : ''}}" bindtap="onCouponNone">不使用优惠券</view>
+    <view class="coupon-opt {{couponId===c.id ? 'on' : ''}}"
+          wx:for="{{coupons}}" wx:key="id" wx:for-item="c"
+          data-index="{{index}}" bindtap="onCoupon">
+      {{c.name}}（满{{c.threshold/100}}减{{c.value/100}}）
+    </view>
+  </view>
+
+  <van-submit-bar price="{{total}}" button-text="微信支付" bind:submit="checkout">
+    <text class="bar-tip">共 {{items.length}} 种</text>
+  </van-submit-bar>
+</view>

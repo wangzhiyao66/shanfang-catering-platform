@@ -1,0 +1,77 @@
+server:
+  port: 3000
+  servlet:
+    context-path: /
+
+spring:
+  application:
+    name: ordering-serve
+  # ===== 数据源：直连本机 MySQL 8.0.18 =====
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    # 库名 ordering 需提前创建（CREATE DATABASE ordering CHARACTER SET utf8mb4）
+    url: jdbc:mysql://localhost:3306/ordering?useUnicode=true&characterEncoding=UTF-8&connectionCollation=utf8mb4_general_ci&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
+    username: root
+    password: 12345678
+  # ===== 启动时自动建表 + 种子数据（CREATE TABLE IF NOT EXISTS / INSERT IGNORE，可重复执行）=====
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:schema.sql
+      data-locations: classpath:data.sql
+  # ===== Redis：缓存 / 分布式锁 =====
+  redis:
+    host: localhost
+    port: 6379
+    database: 0
+    timeout: 3000ms
+    lettuce:
+      pool:
+        max-active: 8
+        max-idle: 8
+        min-idle: 1
+  jackson:
+    default-property-inclusion: non_null
+    time-zone: Asia/Shanghai
+
+# ===== MyBatis-Plus =====
+mybatis-plus:
+  mapper-locations: classpath*:mapper/**/*.xml
+  type-aliases-package: com.ordering.modules.*.entity
+  global-config:
+    db-config:
+      id-type: auto
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+# ===== 业务配置 =====
+ordering:
+  jwt:
+    # 生产务必替换为长随机串
+    secret: "change-me-in-prod-please-use-a-long-random-secret-key-1234567890"
+    expiration: 86400
+  admin:
+    # 骨架默认后台账号（生产应查库 + 密码加密）
+    username: admin
+    password: admin123
+  wechat:
+    appid: "your-wx-appid"
+    secret: "your-wx-secret"
+    mch-id: "your-mch-id"
+    api-v3-key: "your-api-v3-key"
+    notify-url: "http://localhost:3000/api/client/pay/notify"
+    # 微信支付 v3 必填（生产）：商户 API 私钥(PEM)、证书序列号、平台证书(PEM)
+    private-key: ""
+    merchant-serial-no: ""
+    platform-cert: ""
+
+# ===== SpringDoc / Swagger =====
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /v3/api-docs

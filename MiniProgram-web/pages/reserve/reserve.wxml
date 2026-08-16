@@ -1,0 +1,30 @@
+<!-- pages/reserve/reserve.wxml -->
+<view class="reserve">
+  <van-cell-group>
+    <van-field label="日期" value="{{dates[dateIndex].label}}" readonly clickable disabled>
+      <picker slot="button" mode="selector" range="{{dates}}" range-key="label" value="{{dateIndex}}" bindchange="onDate">
+        <van-button size="mini">选择</van-button>
+      </picker>
+    </van-field>
+
+    <van-field label="时段" value="{{times[timeIndex]}}" readonly disabled>
+      <picker slot="button" mode="selector" range="{{times}}" value="{{timeIndex}}" bindchange="onTime">
+        <van-button size="mini">选择</van-button>
+      </picker>
+    </van-field>
+
+    <van-field label="人数" value="{{party}}" readonly disabled>
+      <van-stepper slot="button" value="{{party}}" min="1" max="20" integer bind:change="onParty" />
+    </van-field>
+
+    <van-field label="桌台" value="{{tableIndex!=null ? tables[tableIndex].name : '不指定'}}" readonly clickable disabled>
+      <picker slot="button" mode="selector" range="{{tables}}" range-key="name" value="{{tableIndex}}" bindchange="onTable">
+        <van-button size="mini">选择</van-button>
+      </picker>
+    </van-field>
+  </van-cell-group>
+
+  <view class="tip muted">提示：桌台列表由后端「client 桌台接口」实时提供；不指定时由店家分配。</view>
+
+  <van-submit-bar price="0" button-text="提交预订" bind:submit="submit" />
+</view>

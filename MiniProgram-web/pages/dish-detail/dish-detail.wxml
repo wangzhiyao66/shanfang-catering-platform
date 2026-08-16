@@ -1,0 +1,31 @@
+<!-- pages/dish-detail/dish-detail.wxml -->
+<view class="detail page-pad" wx:if="{{dish.id}}">
+  <view class="hero">{{dish.name[0]}}</view>
+
+  <view class="block">
+    <view class="dish-name">{{dish.name}}</view>
+    <view class="price from">¥{{dish.price/100}} 起</view>
+    <view class="muted desc" wx:if="{{dish.description}}">{{dish.description}}</view>
+  </view>
+
+  <!-- 规格加项（来自后端 dish_spec，可多选；带加价则展示 +¥X） -->
+  <view class="block" wx:if="{{specs.length}}">
+    <view class="spec-title">规格加项<text class="req">（可多选）</text></view>
+    <view class="opt-wrap">
+      <view class="opt-chip {{selected[sp.name] ? 'on' : ''}}"
+            wx:for="{{specs}}" wx:key="name" wx:for-item="sp"
+            data-name="{{sp.name}}" bindtap="onToggleSpec">
+        <text>{{sp.name}}</text>
+        <text class="delta" wx:if="{{sp.priceDelta > 0}}">+¥{{sp.priceDelta/100}}</text>
+      </view>
+    </view>
+  </view>
+
+  <van-cell-group>
+    <van-field label="备注" placeholder="如：少辣、免葱蒜" value="{{remark}}" bind:change="onRemark" />
+  </van-cell-group>
+
+  <van-submit-bar price="{{price}}" button-text="加入购物车" bind:submit="addToCart">
+    <van-stepper value="{{qty}}" min="1" integer bind:change="onQty" />
+  </van-submit-bar>
+</view>

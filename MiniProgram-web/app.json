@@ -1,0 +1,51 @@
+{
+  "pages": [
+    "pages/menu/menu",
+    "pages/dish-detail/dish-detail",
+    "pages/cart/cart",
+    "pages/order/order",
+    "pages/member/member",
+    "pages/reserve/reserve"
+  ],
+  "window": {
+    "navigationBarBackgroundColor": "#e8543f",
+    "navigationBarTitleText": "膳房·中餐",
+    "navigationBarTextStyle": "white",
+    "backgroundColor": "#f7f8fa",
+    "enablePullDownRefresh": false
+  },
+  "usingComponents": {
+    "van-button": "@vant/weapp/button/index",
+    "van-tag": "@vant/weapp/tag/index",
+    "van-card": "@vant/weapp/card/index",
+    "van-popup": "@vant/weapp/popup/index",
+    "van-stepper": "@vant/weapp/stepper/index",
+    "van-submit-bar": "@vant/weapp/submit-bar/index",
+    "van-radio": "@vant/weapp/radio/index",
+    "van-radio-group": "@vant/weapp/radio-group/index",
+    "van-empty": "@vant/weapp/empty/index",
+    "van-steps": "@vant/weapp/steps/index",
+    "van-field": "@vant/weapp/field/index",
+    "van-cell": "@vant/weapp/cell/index",
+    "van-cell-group": "@vant/weapp/cell-group/index",
+    "van-toast": "@vant/weapp/toast/index",
+    "van-dialog": "@vant/weapp/dialog/index",
+    "van-icon": "@vant/weapp/icon/index",
+    "van-tabs": "@vant/weapp/tabs/index",
+    "van-tab": "@vant/weapp/tab/index"
+  },
+  "tabBar": {
+    "color": "#9aa0a8",
+    "selectedColor": "#e8543f",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "black",
+    "list": [
+      { "pagePath": "pages/menu/menu", "text": "点餐" },
+      { "pagePath": "pages/order/order", "text": "订单" },
+      { "pagePath": "pages/reserve/reserve", "text": "预订" },
+      { "pagePath": "pages/member/member", "text": "我的" }
+    ]
+  },
+  "sitemapLocation": "sitemap.json",
+  "style": "v2"
+}

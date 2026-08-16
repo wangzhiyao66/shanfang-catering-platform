@@ -1,0 +1,16 @@
+{
+  "name": "miniprogram-web",
+  "version": "1.0.0",
+  "description": "中餐点餐小程序的**原生微信小程序**工程，对应《点餐小程序PRD_v1》的顾客端功能。",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@vant/weapp": "^1.11.7",
+    "miniprogram-sm-crypto": "^0.4.0"
+  }
+}

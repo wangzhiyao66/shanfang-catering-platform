@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>点餐小程序功能调研报告（中餐单店版 · v1）</title>
+<style>
+  :root{
+    --bg:#ffffff; --ink:#1f2329; --sub:#5b6168; --line:#e7e9ee;
+    --brand:#e8543f; --brand2:#ff8a3d; --soft:#fff4ef; --ok:#2f9e6b; --warn:#d9822b;
+    --card:#fafbfc;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,"PingFang SC","Microsoft YaHei",Segoe UI,sans-serif;
+    color:var(--ink);background:#f5f6f8;line-height:1.65;}
+  .wrap{max-width:960px;margin:0 auto;padding:32px 20px 80px;}
+  header.hero{background:linear-gradient(135deg,var(--brand),var(--brand2));color:#fff;
+    border-radius:18px;padding:34px 32px;box-shadow:0 10px 30px rgba(232,84,63,.25)}
+  header.hero h1{margin:0 0 8px;font-size:26px;letter-spacing:.5px}
+  header.hero p{margin:0;opacity:.95;font-size:14px}
+  .tag{display:inline-block;background:rgba(255,255,255,.2);border-radius:20px;
+    padding:3px 12px;font-size:12px;margin:12px 8px 0 0}
+  section{background:var(--bg);border:1px solid var(--line);border-radius:14px;
+    padding:24px 26px;margin-top:22px;box-shadow:0 2px 8px rgba(20,30,60,.04)}
+  h2{font-size:19px;margin:0 0 14px;padding-left:11px;border-left:4px solid var(--brand)}
+  h3{font-size:15px;margin:18px 0 8px;color:var(--sub)}
+  p,li{font-size:14px;color:#33383f}
+  .lead{color:var(--sub);font-size:14px;margin-top:4px}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:6px 0 4px}
+  .stat{background:var(--soft);border-radius:12px;padding:14px;text-align:center}
+  .stat b{display:block;font-size:22px;color:var(--brand)}
+  .stat span{font-size:12px;color:var(--sub)}
+  table{width:100%;border-collapse:collapse;margin:10px 0;font-size:13.5px}
+  th,td{border:1px solid var(--line);padding:9px 11px;text-align:left;vertical-align:top}
+  th{background:var(--card);color:var(--sub);font-weight:600}
+  tr:nth-child(even) td{background:#fcfcfd}
+  .pill{display:inline-block;padding:2px 9px;border-radius:10px;font-size:12px;}
+  .p-must{background:#e9f7ef;color:var(--ok)}
+  .p-mid{background:#fff5e6;color:var(--warn)}
+  .p-late{background:#eef1f6;color:#5b6168}
+  ul.clean{list-style:none;padding:0;margin:6px 0}
+  ul.clean li{padding:7px 0 7px 22px;position:relative;border-bottom:1px dashed var(--line)}
+  ul.clean li:last-child{border-bottom:none}
+  ul.clean li:before{content:"";position:absolute;left:4px;top:14px;width:7px;height:7px;
+    border-radius:50%;background:var(--brand)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .note{background:var(--soft);border-left:4px solid var(--brand2);border-radius:8px;
+    padding:12px 14px;font-size:13px;color:#6a4a3a;margin:12px 0}
+  .svgbox{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px;margin:10px 0}
+  footer{color:var(--sub);font-size:12px;text-align:center;margin-top:30px}
+  .src{font-size:12px;color:#8a909a;margin-top:6px}
+  @media(max-width:720px){.stats{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <h1>点餐小程序功能调研报告</h1>
+    <p>面向「中餐单店」的第一版功能梳理 · 调研日期 2026-08-14</p>
+    <div>
+      <span class="tag">微信生态</span>
+      <span class="tag">扫码点餐</span>
+      <span class="tag">堂食为主</span>
+      <span class="tag">可含外卖/自提</span>
+      <span class="tag">v1 调研版</span>
+    </div>
+  </header>
+
+  <!-- 1. 背景 -->
+  <section>
+    <h2>一、调研背景与目标</h2>
+    <p>你计划开一家中餐门店，希望做一个自己的微信点餐小程序。本调研基于目前<strong>已上线运营</strong>的餐饮点餐小程序（涵盖中餐、火锅、西餐、茶饮等业态），梳理出一套成熟小程序通常具备的功能，并结合中餐场景给出<strong>专属建议</strong>与<strong>落地优先级</strong>，作为后续开发/选型的依据。</p>
+    <p class="lead">核心结论先行：中餐点餐小程序 ≠ 简单“电子菜单”，而是把<strong>点餐 → 支付 → 后厨 → 会员 → 营销</strong>整合到一个“扫码即用”的入口；对单店来说，优先做扎实的堂食点餐闭环，再逐步叠加会员与营销。</p>
+  </section>
+
+  <!-- 2. 行业现状 -->
+  <section>
+    <h2>二、行业现状速览（关键数据）</h2>
+    <div class="stats">
+      <div class="stat"><b>15–20%</b><span>扫码点餐<br>翻台率提升</span></div>
+      <div class="stat"><b>20–30%</b><span>外卖平台<br>抽佣比例</span></div>
+      <div class="stat"><b>+18%</b><span>私域小程序<br>客单价更高</span></div>
+      <div class="stat"><b>62–68%</b><span>餐饮SaaS<br>方案占比</span></div>
+    </div>
+    <ul class="clean">
+      <li>使用门店小程序的商家，<strong>复购率比纯线下高 10–22 个百分点</strong>，会员转化率约 5–15%。</li>
+      <li>2023–2025 年，餐饮类 SaaS 小程序占比从约 40% 增长到 62–68%，成为<strong>中小餐饮主流选择</strong>。</li>
+      <li>痛点：第三方外卖平台抽佣高（单均 15–30%），小程序自营外卖/自提可显著降本。</li>
+      <li>风险提示：只做“点餐工具”、不做运营动作的小程序，3 个月存活率仅约 32%；搭配会员/营销的可达 76%。</li>
+    </ul>
+    <p class="src">数据来源：凡科/建站类行业指南、餐饮 SaaS 服务商公开资料（2024–2026 年汇总）。</p>
+  </section>
+
+  <!-- 3. 功能全景图 -->
+  <section>
+    <h2>三、功能全景：三端协同</h2>
+    <p class="lead">成熟的扫码点餐系统通常覆盖 <strong>顾客端 / 商家后台 / 后厨端</strong> 三大端口，数据实时同步，形成闭环。下方为功能架构示意。</p>
+    <div class="svgbox">
+      <svg viewBox="0 0 680 320" width="100%" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,PingFang SC,sans-serif">
+        <!-- 顾客端 -->
+        <rect x="14" y="20" width="200" height="280" rx="12" fill="#fff4ef" stroke="#e8543f"/>
+        <text x="114" y="46" text-anchor="middle" font-size="15" font-weight="700" fill="#e8543f">顾客端（小程序）</text>
+        <g font-size="12.5" fill="#3a3f47">
+          <text x="28" y="76">· 扫码点餐 / 桌台绑定</text>
+          <text x="28" y="100">· 菜品分类 &amp; 详情</text>
+          <text x="28" y="124">· 规格/口味/忌口备注</text>
+          <text x="28" y="148">· 购物车 / 多人合单</text>
+          <text x="28" y="172">· 微信支付</text>
+          <text x="28" y="196">· 订单状态 / 催加退</text>
+          <text x="28" y="220">· 会员 / 积分 / 券</text>
+          <text x="28" y="244">· 预约订座 / 排队</text>
+          <text x="28" y="268">· 外卖 / 自提</text>
+        </g>
+        <!-- 商家后台 -->
+        <rect x="240" y="20" width="200" height="280" rx="12" fill="#eef6ff" stroke="#3a7bd5"/>
+        <text x="340" y="46" text-anchor="middle" font-size="15" font-weight="700" fill="#3a7bd5">商家后台</text>
+        <g font-size="12.5" fill="#3a3f47">
+          <text x="254" y="76">· 菜品管理（上架/改价）</text>
+          <text x="254" y="100">· 库存 / 售罄管控</text>
+          <text x="254" y="124">· 桌台管理</text>
+          <text x="254" y="148">· 订单 / 退改处理</text>
+          <text x="254" y="172">· 会员 &amp; 储值</text>
+          <text x="254" y="196">· 优惠券 / 满减 / 拼团</text>
+          <text x="254" y="220">· 数据报表</text>
+          <text x="254" y="244">· 员工权限</text>
+          <text x="254" y="268">· 多门店（可选）</text>
+        </g>
+        <!-- 后厨端 -->
+        <rect x="466" y="20" width="200" height="280" rx="12" fill="#eafaf1" stroke="#2f9e6b"/>
+        <text x="566" y="46" text-anchor="middle" font-size="15" font-weight="700" fill="#2f9e6b">后厨端</text>
+        <g font-size="12.5" fill="#3a3f47">
+          <text x="480" y="76">· 订单实时接单</text>
+          <text x="480" y="100">· 分档口打印</text>
+          <text x="480" y="124">· KDS 电子厨显</text>
+          <text x="480" y="148">· 超时预警</text>
+          <text x="480" y="172">· 划菜 / 出餐</text>
+          <text x="480" y="196">· 断网缓存</text>
+          <text x="480" y="220">· 状态回传顾客</text>
+        </g>
+        <!-- 连接箭头 -->
+        <path d="M214 150 L240 150" stroke="#bbb" stroke-width="2"/>
+        <path d="M440 150 L466 150" stroke="#bbb" stroke-width="2"/>
+        <text x="227" y="142" font-size="10" fill="#999">数据同步</text>
+        <text x="453" y="142" font-size="10" fill="#999">数据同步</text>
+      </svg>
+    </div>
+  </section>
+
+  <!-- 4. 顾客端功能 -->
+  <section>
+    <h2>四、顾客端核心功能清单</h2>
+    <div class="grid2">
+      <div>
+        <h3>点餐与支付</h3>
+        <ul class="clean">
+          <li><strong>扫码点餐</strong>：落座扫桌码，自动绑定桌号（防上错菜）。</li>
+          <li><strong>菜品分类展示</strong>：热菜 / 凉菜 / 汤品 / 主食 / 小吃 / 饮品。</li>
+          <li><strong>菜品详情</strong>：图片、价格、描述、食材、辣度、销量、评价。</li>
+          <li><strong>购物车</strong>：增删、数量、实时金额、口味备注。</li>
+          <li><strong>多人同时点餐 + 合单支付</strong>：一桌各自选，统一结算（中餐聚餐刚需）。</li>
+          <li><strong>在线支付</strong>：微信支付为主，可加会员余额 / 会员卡。</li>
+        </ul>
+      </div>
+      <div>
+        <h3>订单与互动</h3>
+        <ul class="clean">
+          <li><strong>订单状态</strong>：待接单 → 制作中 → 已上菜 → 已完成。</li>
+          <li><strong>催菜 / 加菜 / 退菜</strong>：顾客端一键操作，后厨实时接收。</li>
+          <li><strong>历史订单 &amp; 评价</strong>：用餐后评分、留言，商家可回复。</li>
+          <li><strong>会员中心</strong>：积分累计、等级、储值、优惠券。</li>
+          <li><strong>预约订座 / 排队取号</strong>：选日期、人数、包间、远程取号。</li>
+          <li><strong>外卖 / 自提</strong>：线上下单，到店取或配送（降平台抽佣）。</li>
+        </ul>
+      </div>
+    </div>
+    <div class="note">💡 经验值：中餐“多人合单 + 口味备注”是最高频、最容易被忽视的功能，务必在 MVP 阶段就做好。</div>
+  </section>
+
+  <!-- 5. 中餐特色 -->
+  <section>
+    <h2>五、中餐场景的专属特色功能（重点）</h2>
+    <p class="lead">相比西餐/茶饮，中餐的菜品多样、聚餐场景多、个性化备注多，以下功能是调研中反复被强调的“中餐适配项”。</p>
+    <table>
+      <tr><th>特色功能</th><th>说明 / 举例</th><th>优先级</th></tr>
+      <tr><td>份量选择</td><td>大份 / 小份 / 半份（如“半份¥18·整份¥32”）</td><td><span class="pill p-must">必做</span></td></tr>
+      <tr><td>辣度选项</td><td>微辣 / 中辣 / 特辣 / 免辣（川湘菜高频）</td><td><span class="pill p-must">必做</span></td></tr>
+      <tr><td>忌口备注</td><td>免葱 / 免蒜 / 少盐 / 多放醋等预设 + 自由输入</td><td><span class="pill p-must">必做</span></td></tr>
+      <tr><td>称重 / 按斤计价</td><td>海鲜、烤鸭等可称重菜品，选后自动算金额</td><td><span class="pill p-mid">进阶</span></td></tr>
+      <tr><td>套餐一键下单</td><td>4人餐 / 6人餐 / 10人宴席（含多菜一汤）</td><td><span class="pill p-mid">进阶</span></td></tr>
+      <tr><td>一桌多码共享</td><td>圆桌聚餐各自扫码，订单自动合并</td><td><span class="pill p-must">必做</span></td></tr>
+      <tr><td>包间预订 + 订金</td><td>选日期/人数/包间，支付订金锁定</td><td><span class="pill p-mid">进阶</span></td></tr>
+      <tr><td>菜品文化属性</td><td>典故 / 厨师故事 / 非遗工艺，增强中餐文化感</td><td><span class="pill p-late">远期</span></td></tr>
+    </table>
+  </section>
+
+  <!-- 6. 商家后台 -->
+  <section>
+    <h2>六、商家后台功能清单</h2>
+    <div class="grid2">
+      <div>
+        <h3>经营基础</h3>
+        <ul class="clean">
+          <li><strong>菜品管理</strong>：上/下架、改价、图片、规格、库存、推荐爆款。</li>
+          <li><strong>库存管控</strong>：售罄自动标注，避免超卖。</li>
+          <li><strong>桌台管理</strong>：开台 / 并台 / 转台，空台/占用状态一目了然。</li>
+          <li><strong>订单管理</strong>：接单、出餐、完成、退改，分类显示堂食/外卖/预约。</li>
+        </ul>
+      </div>
+      <div>
+        <h3>增长与数据</h3>
+        <ul class="clean">
+          <li><strong>会员 &amp; 储值</strong>：积分、等级、储值赠送，沉淀熟客。</li>
+          <li><strong>营销工具</strong>：优惠券、满减、拼团、秒杀、新人礼。</li>
+          <li><strong>数据报表</strong>：营业额、订单量、热销榜、翻台率、客单价。</li>
+          <li><strong>员工权限</strong>：店长 / 服务员不同账号权限。</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7. 后厨端 -->
+  <section>
+    <h2>七、后厨端 &amp; 硬件</h2>
+    <ul class="clean">
+      <li><strong>后厨小票打印</strong>：订单自动出单，支持<strong>分档口打印</strong>（热菜 / 凉菜 / 饮品分别出单），减少人工分单失误。</li>
+      <li><strong>KDS 电子厨显</strong>：无纸化，按屏制作、超时变色预警、批量划菜；适合正餐/宴席高峰期。</li>
+      <li><strong>断网缓存</strong>：网络中断时可暂存订单，恢复后自动补打，杜绝漏单。</li>
+      <li><strong>硬件建议</strong>：小店用 58mm 带切刀热敏打印机；多档口/多品类用 80mm 网口云打印机。</li>
+    </ul>
+    <div class="note">💡 对正餐/宴席型中餐，<strong>分档口打印 + 桌台精细管理</strong>比普通快餐更重要，选型时重点确认。</div>
+  </section>
+
+  <!-- 8. 方案对比 -->
+  <section>
+    <h2>八、落地方案对比：自建 vs SaaS vs 模板</h2>
+    <table>
+      <tr><th>方案</th><th>成本</th><th>上线周期</th><th>技术要求</th><th>适用场景</th><th>主要风险</th></tr>
+      <tr><td><strong>模板搭建</strong></td><td>800–3000 元（一次性）</td><td>3–7 天</td><td>无</td><td>微型单店、仅基础点餐</td><td>无法升级储值/营销，二次迁移成本高</td></tr>
+      <tr><td><strong>SaaS 平台</strong></td><td>998–5998 元/年</td><td>7–15 天</td><td>无</td><td>中小门店/连锁，需点餐+会员+营销</td><td>极特殊定制（如自有供应链对接）受限</td></tr>
+      <tr><td><strong>定制开发</strong></td><td>3–20 万元</td><td>1–3 个月</td><td>需技术团队</td><td>10+ 门店连锁、特殊业务流程</td><td>周期长、年维护费 15–20%</td></tr>
+    </table>
+    <div class="note">✅ 针对「中餐单店起步」的建议：<strong>优先选餐饮垂直类 SaaS（年费 1000–4000 元）</strong> 快速验证，功能（点餐/会员/营销/后厨打印）已齐备；待跑通模型、有专属流程需求后再考虑轻定制或源码部署。自建从零开发对单店性价比低。</div>
+  </section>
+
+  <!-- 9. 优先级 -->
+  <section>
+    <h2>九、功能落地优先级建议</h2>
+    <table>
+      <tr><th>阶段</th><th>目标</th><th>包含功能</th></tr>
+      <tr>
+        <td><span class="pill p-must">MVP</span><br>上线即用的点餐闭环</td>
+        <td>先把堂食点餐跑通，替代纸质菜单</td>
+        <td>扫码点餐+桌台绑定、菜品分类与详情、规格/口味/忌口、购物车+多人合单、微信支付、订单状态、后厨打印、基础菜品管理</td>
+      </tr>
+      <tr>
+        <td><span class="pill p-mid">进阶</span><br>提升复购与客单价</td>
+        <td>把“一次性顾客”变“回头客”</td>
+        <td>会员积分、储值、优惠券/满减、套餐、预约订座/包间、排队取号、催加退菜、数据报表、称重计价</td>
+      </tr>
+      <tr>
+        <td><span class="pill p-late">远期</span><br>精细化与扩张</td>
+        <td>降本增效、扩大经营</td>
+        <td>外卖自配送/KDS 厨显、拼团/秒杀/分销裂变、多门店、供应链进销存、菜品文化故事</td>
+      </tr>
+    </table>
+  </section>
+
+  <!-- 10. 下一步 -->
+  <section>
+    <h2>十、下一步行动建议</h2>
+    <ul class="clean">
+      <li><strong>明确业态定位</strong>：是快餐式点餐，还是正餐/宴席型？决定是否要包间预订、套餐、KDS。</li>
+      <li><strong>盘点菜品结构</strong>：列出分类、是否有份量/辣度/称重差异，作为菜单配置基础。</li>
+      <li><strong>选 1–2 个 SaaS 试用</strong>：如餐饮垂直 SaaS，重点验证扫码点餐、多人合单、后厨分单打印是否顺手。</li>
+      <li><strong>准备微信支付商户号 &amp; 小程序账号</strong>：这是上线前置条件。</li>
+      <li><strong>本调研 v2</strong>：确定方案后，可进入“功能清单细化 + 原型/UI 设计”阶段。</li>
+    </ul>
+  </section>
+
+  <footer>
+    本报告为第一版调研（v1），基于公开行业资料与已上线点餐小程序案例整理，供功能规划参考。<br>
+    如需进入原型设计或对比具体 SaaS 产品，可继续下一轮。
+  </footer>
+
+</div>
+</body>
+</html>

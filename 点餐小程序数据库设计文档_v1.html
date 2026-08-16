@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>点餐小程序 · 后端数据库设计文档 v1</title>
+<style>
+  :root{
+    --bg:#f7f8fa; --panel:#ffffff; --ink:#1f2329; --sub:#646a73;
+    --line:#e5e6eb; --brand:#e8543f; --brand-soft:#fce9e5;
+    --blue:#2f6fed; --green:#18a058; --amber:#d99100; --purple:#7c5cff;
+    --radius:12px; --shadow:0 1px 3px rgba(0,0,0,.06),0 6px 18px rgba(0,0,0,.04);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--ink);line-height:1.6}
+  .wrap{display:flex;max-width:1280px;margin:0 auto}
+  /* 侧边导航 */
+  nav{position:sticky;top:0;align-self:flex-start;width:230px;height:100vh;overflow:auto;padding:22px 14px;background:var(--panel);border-right:1px solid var(--line);flex:0 0 auto}
+  nav h4{margin:18px 8px 8px;font-size:12px;color:var(--sub);letter-spacing:.08em;text-transform:uppercase}
+  nav a{display:block;padding:7px 10px;border-radius:8px;color:var(--sub);text-decoration:none;font-size:13.5px}
+  nav a:hover{background:var(--brand-soft);color:var(--brand)}
+  /* 正文 */
+  main{flex:1;min-width:0;padding:34px 44px 80px}
+  header.doc{margin-bottom:26px}
+  header.doc h1{font-size:26px;margin:0 0 6px}
+  header.doc .meta{color:var(--sub);font-size:13px}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:26px 28px;margin:0 0 24px;box-shadow:var(--shadow)}
+  h2{font-size:20px;margin:0 0 14px;padding-left:11px;border-left:4px solid var(--brand)}
+  h3{font-size:16px;margin:22px 0 10px;color:var(--ink)}
+  p{margin:8px 0}
+  .lead{color:var(--sub);font-size:14.5px}
+  /* 域标签 */
+  .dom{display:inline-block;font-size:11.5px;font-weight:600;padding:2px 9px;border-radius:20px;margin-right:6px;vertical-align:middle}
+  .d-menu{background:#eaf2ff;color:var(--blue)}
+  .d-table{background:#e9f8ef;color:var(--green)}
+  .d-member{background:#f3edff;color:var(--purple)}
+  .d-order{background:var(--brand-soft);color:var(--brand)}
+  .d-kitchen{background:#fff3e0;color:var(--amber)}
+  .d-mkt{background:#fdeaf3;color:#c2185b}
+  .d-auth{background:#eef0f2;color:#5a6068}
+  .d-conf{background:#eef0f2;color:#5a6068}
+  /* 表 */
+  table{border-collapse:collapse;width:100%;margin:10px 0;font-size:13px}
+  th,td{border:1px solid var(--line);padding:7px 10px;text-align:left;vertical-align:top}
+  th{background:#f3f4f6;font-weight:600;color:var(--ink)}
+  td code{background:#f3f4f6;padding:1px 5px;border-radius:4px;font-size:12px}
+  .pk{color:var(--brand);font-weight:600}
+  .fk{color:var(--blue);font-weight:600}
+  /* 卡片 */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;margin:12px 0}
+  .card{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:#fcfcfd}
+  .card b{font-size:14px}
+  .card .t{font-size:12px;color:var(--sub);margin-top:4px}
+  /* 边界块 */
+  .bound{border-left:4px solid var(--blue);background:#f6f9ff;padding:12px 16px;border-radius:0 10px 10px 0;margin:12px 0}
+  .bound.warn{border-left-color:var(--brand);background:var(--brand-soft)}
+  .bound.ok{border-left-color:var(--green);background:#f1faf4}
+  /* ER */
+  .er{width:100%;overflow:auto;background:#fbfbfc;border:1px solid var(--line);border-radius:10px;padding:10px}
+  .er svg{display:block;margin:0 auto}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--sub);margin-top:8px}
+  .legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+  pre{background:#1f2329;color:#e6e6e6;padding:14px 16px;border-radius:10px;overflow:auto;font-size:12.5px;line-height:1.5}
+  code.inl{background:#f3f4f6;padding:1px 6px;border-radius:4px;font-size:12.5px}
+  .note{font-size:12.5px;color:var(--sub)}
+  ul.tight{margin:8px 0;padding-left:20px}
+  ul.tight li{margin:4px 0}
+  .pill{display:inline-block;font-size:11px;padding:1px 7px;border-radius:6px;background:#eef0f2;color:#5a6068;margin-left:6px}
+  .pill.p0{background:#fde2dc;color:var(--brand)}
+  .pill.p1{background:#fff3e0;color:var(--amber)}
+  .pill.p2{background:#eaf2ff;color:var(--blue)}
+  footer{color:var(--sub);font-size:12px;text-align:center;padding:20px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav>
+  <h4>目录</h4>
+  <a href="#s1">1. 设计目标与原则</a>
+  <a href="#s2">2. 总体架构</a>
+  <a href="#s3">3. 表总览（26 张）</a>
+  <a href="#s4">4. ER 关系图</a>
+  <a href="#s5">5. 表详细定义</a>
+  <a href="#s6">6. 关键边界设计</a>
+  <a href="#s7">7. 多端兼容设计</a>
+  <a href="#s8">8. 索引与性能</a>
+  <a href="#s9">9. 建表示例（DDL）</a>
+  <a href="#s10">10. 后续迭代</a>
+</nav>
+
+<main>
+<header class="doc">
+  <h1>点餐小程序 · 后端数据库设计文档 <span style="color:var(--brand)">v1</span></h1>
+  <div class="meta">场景：中餐单店 · 三端共用一套数据库（小程序顾客端 / 商家后台 / 后厨端） · 版本 2026-08-15</div>
+</header>
+
+<!-- 1 -->
+<section id="s1">
+  <h2>1. 设计目标与原则</h2>
+  <p class="lead">本设计回答四个问题：要建几张表、表之间怎么关联、有哪些边界、同一套库如何同时兼容小程序端和后台。</p>
+  <div class="grid">
+    <div class="card"><b>一套库，三端共享</b><div class="t">小程序、后台、后厨读写同一份数据，不存在"两套数据"。</div></div>
+    <div class="card"><b>按域建模</b><div class="t">菜单 / 桌台 / 会员 / 订单 / 后厨 / 营销 / 权限 各域解耦，靠订单主表聚合。</div></div>
+    <div class="card"><b>状态机驱动</b><div class="t">订单、桌台、支付等核心实体用明确状态机约束合法流转。</div></div>
+    <div class="card"><b>可扩展</b><div class="t">带 <code class="inl">shop_id</code> 租户字段，单店起步、未来可平滑升级连锁。</div></div>
+  </div>
+  <p class="note">技术选型建议：关系型数据库 <b>MySQL 8.0</b>（或 PostgreSQL 14）；高频/临时数据（桌台实时状态、购物车、排队号）放 <b>Redis</b>；图片/菜单图走对象存储（COS/OSS）。以下表定义以 MySQL 风格为例。</p>
+</section>
+
+<!-- 2 -->
+<section id="s2">
+  <h2>2. 总体架构</h2>
+  <p>三层表现（小程序 / 后台 Web / 后厨 KDS）通过统一的 <b>API 网关 + 鉴权层</b> 访问同一业务服务与同一数据库。数据库是唯一的"事实来源"。</p>
+  <pre>┌────────────┐   ┌────────────┐   ┌──────────┐
+│ 小程序(顾客)│   │ 后台(商家) │   │ 后厨(KDS)│
+└─────┬──────┘   └─────┬──────┘   └────┬─────┘
+      │  /api/client/*  │ /api/admin/*  │ /api/kitchen/*
+      └────────┬────────┴───────┬────────┘
+               ▼                ▼
+         ┌─────────────── 鉴权 & 路由网关 ───────────────┐
+         │  小程序: openid→member  |  后台: staff→role    │
+         └────────────────────┬──────────────────────────┘
+                              ▼
+                  业务服务层（Service / DAO 共用）
+                              ▼
+        ┌──────────── 主库 MySQL ────────────┐  ┌─ Redis ─┐
+        │  26 张表（同库，按 shop_id 隔离）    │  │状态/购物车│
+        └────────────────────────────────────┘  └─────────┘</pre>
+  <p class="note">关键认知：三端不是三套库，而是 <b>同一库的三种访问视角</b>。小程序只看见"自己的订单 + 公开菜单"；后台看见"全店数据"；后厨只看见"本档口的出单"。</p>
+</section>
+
+<!-- 3 -->
+<section id="s3">
+  <h2>3. 表总览（26 张）</h2>
+  <p class="lead">按业务域分组。优先级：<span class="pill p0">P0 必做</span><span class="pill p1">P1 进阶</span><span class="pill p2">P2 远期</span></p>
+
+  <h3><span class="dom d-menu">门店/菜单</span></h3>
+  <ul class="tight">
+    <li><b>shop</b> 门店 <span class="pill p0">P0</span> — 店铺基本信息、营业时间、支付参数引用</li>
+    <li><b>category</b> 菜品分类 <span class="pill p0">P0</span> — 热菜/凉菜/汤品/主食/小吃/饮品</li>
+    <li><b>dish</b> 菜品 <span class="pill p0">P0</span> — 名称、基础价、状态、是否称重、默认辣度</li>
+    <li><b>dish_spec</b> 规格组 <span class="pill p0">P0</span> — 份量 / 辣度 / 忌口（如"份量"是一个组）</li>
+    <li><b>dish_spec_option</b> 规格选项 <span class="pill p0">P0</span> — 大/小/半份；微/中/特/免</li>
+    <li><b>dish_sku</b> 菜品售卖单元 <span class="pill p0">P0</span> — 规格组合对应唯一价格与库存</li>
+  </ul>
+
+  <h3><span class="dom d-table">桌台/场景</span></h3>
+  <ul class="tight">
+    <li><b>dining_table</b> 桌台 <span class="pill p0">P0</span> — 桌号、区域(大厅/包间)、座位数、状态、二维码</li>
+    <li><b>reservation</b> 预订/包间 <span class="pill p1">P1</span> — 日期、时段、人数、包间、订金</li>
+    <li><b>queue</b> 排队 <span class="pill p1">P1</span> — 取号、人数、叫号、状态</li>
+  </ul>
+
+  <h3><span class="dom d-member">会员/顾客</span></h3>
+  <ul class="tight">
+    <li><b>member</b> 会员 <span class="pill p0">P0</span> — 微信 openid、手机号、昵称、等级、积分、余额</li>
+    <li><b>member_level</b> 会员等级 <span class="pill p1">P1</span> — 等级名、折扣、升级门槛</li>
+    <li><b>member_address</b> 会员地址 <span class="pill p1">P1</span> — 外卖/自提收货地址</li>
+    <li><b>points_log</b> 积分流水 <span class="pill p1">P1</span> — 获得/消耗记录（审计）</li>
+    <li><b>balance_log</b> 储值流水 <span class="pill p2">P2</span> — 充值/消费记录</li>
+  </ul>
+
+  <h3><span class="dom d-order">订单/交易</span></h3>
+  <ul class="tight">
+    <li><b>cart</b> 购物车 <span class="pill p0">P0</span> — 多人合单用，绑定桌台+成员</li>
+    <li><b>cart_item</b> 购物车明细 <span class="pill p0">P0</span> — 菜品/规格/数量/备注</li>
+    <li><b>order</b> 订单主表 <span class="pill p0">P0</span> — 订单号、类型(堂食/外卖/自提)、状态、金额</li>
+    <li><b>order_item</b> 订单明细 <span class="pill p0">P0</span> — 同 cart_item，落定快照（含规格JSON、备注、辣度）</li>
+    <li><b>order_payment</b> 支付记录 <span class="pill p0">P0</span> — 微信支付流水、状态、幂等</li>
+  </ul>
+
+  <h3><span class="dom d-kitchen">后厨/履约</span></h3>
+  <ul class="tight">
+    <li><b>kitchen_station</b> 档口 <span class="pill p0">P0</span> — 热菜/凉菜/饮品等出单口</li>
+    <li><b>kitchen_ticket</b> 厨打分单 <span class="pill p0">P0</span> — 订单按档口拆分出的出单，状态独立</li>
+    <li><b>printer</b> 打印机 <span class="pill p1">P1</span> — 各档口/总台打印机配置</li>
+  </ul>
+
+  <h3><span class="dom d-mkt">营销</span></h3>
+  <ul class="tight">
+    <li><b>coupon_template</b> 优惠券模板 <span class="pill p1">P1</span> — 满减/折扣规则</li>
+    <li><b>coupon</b> 用户优惠券 <span class="pill p1">P1</span> — 发放到具体会员的券</li>
+    <li><b>promotion</b> 促销活动 <span class="pill p2">P2</span> — 秒杀/拼团/满赠</li>
+  </ul>
+
+  <h3><span class="dom d-auth">权限/员工</span> &amp; <span class="dom d-conf">配置</span></h3>
+  <ul class="tight">
+    <li><b>staff</b> 员工账号 <span class="pill p0">P0</span> — 老板/店长/服务员/后厨，角色外键</li>
+    <li><b>role</b> 角色 <span class="pill p0">P0</span> — 权限集合（功能+数据范围）</li>
+    <li><b>review</b> 评价 <span class="pill p1">P1</span> — 订单/菜品评分与留言</li>
+    <li><b>config</b> 系统配置 <span class="pill p0">P0</span> — 营业时间、分单规则、小程序开关</li>
+    <li><b>operation_log</b> 操作日志 <span class="pill p1">P1</span> — 后台关键操作审计</li>
+  </ul>
+</section>
+
+<!-- 4 ER -->
+<section id="s4">
+  <h2>4. ER 关系图</h2>
+  <p class="lead">按域聚类（相同颜色为同一业务域），连线表示主外键关联。完整字段级关系见第 5 节与关系矩阵。</p>
+  <div class="er">
+  <svg viewBox="0 0 760 560" width="760" xmlns="http://www.w3.org/2000/svg" font-family="PingFang SC,Microsoft YaHei,sans-serif">
+    <!-- 域框 -->
+    <rect x="14" y="14" width="220" height="200" rx="10" fill="#eaf2ff" stroke="#bcd3ff"/>
+    <rect x="254" y="14" width="220" height="200" rx="10" fill="#e9f8ef" stroke="#b6e6c8"/>
+    <rect x="494" y="14" width="252" height="200" rx="10" fill="#f3edff" stroke="#d3c4ff"/>
+    <rect x="14" y="234" width="300" height="200" rx="10" fill="#fdece9" stroke="#f6c3ba"/>
+    <rect x="334" y="234" width="222" height="200" rx="10" fill="#fff3e0" stroke="#f5d49b"/>
+    <rect x="574" y="234" width="172" height="200" rx="10" fill="#fdeaf3" stroke="#f3bfd9"/>
+    <rect x="14" y="454" width="360" height="92" rx="10" fill="#eef0f2" stroke="#cdd2d8"/>
+    <rect x="394" y="454" width="352" height="92" rx="10" fill="#eef0f2" stroke="#cdd2d8"/>
+
+    <!-- 标题 -->
+    <text x="124" y="36" font-size="13" font-weight="700" fill="#2f6fed" text-anchor="middle">门店 / 菜单域</text>
+    <text x="364" y="36" font-size="13" font-weight="700" fill="#18a058" text-anchor="middle">桌台 / 场景域</text>
+    <text x="620" y="36" font-size="13" font-weight="700" fill="#7c5cff" text-anchor="middle">会员 / 顾客域</text>
+    <text x="164" y="256" font-size="13" font-weight="700" fill="#e8543f" text-anchor="middle">订单 / 交易域</text>
+    <text x="445" y="256" font-size="13" font-weight="700" fill="#d99100" text-anchor="middle">后厨 / 履约域</text>
+    <text x="660" y="256" font-size="13" font-weight="700" fill="#c2185b" text-anchor="middle">营销域</text>
+    <text x="194" y="476" font-size="13" font-weight="700" fill="#5a6068" text-anchor="middle">权限 / 员工域</text>
+    <text x="570" y="476" font-size="13" font-weight="700" fill="#5a6068" text-anchor="middle">配置 / 审计域</text>
+
+    <!-- 表名 -->
+    <g font-size="11.5" fill="#1f2329">
+      <text x="30" y="62">shop ── category</text>
+      <text x="30" y="84">dish ── dish_spec</text>
+      <text x="30" y="106">dish_spec_option</text>
+      <text x="30" y="128">dish_sku</text>
+      <text x="30" y="150">（shop 1─* 全部）</text>
+
+      <text x="270" y="62">dining_table</text>
+      <text x="270" y="84">reservation</text>
+      <text x="270" y="106">queue</text>
+      <text x="270" y="128">（table 1─* reservation）</text>
+
+      <text x="510" y="62">member</text>
+      <text x="510" y="84">member_level</text>
+      <text x="510" y="106">member_address</text>
+      <text x="510" y="128">points_log / balance_log</text>
+      <text x="510" y="150">review</text>
+
+      <text x="30" y="282">cart ── cart_item</text>
+      <text x="30" y="304">order ── order_item</text>
+      <text x="30" y="326">order_payment</text>
+      <text x="30" y="348">（order 聚合全域）</text>
+      <text x="30" y="370">（member 1─* order）</text>
+      <text x="30" y="392">（table 1─* order 堂食）</text>
+
+      <text x="350" y="282">kitchen_station</text>
+      <text x="350" y="304">kitchen_ticket</text>
+      <text x="350" y="326">printer</text>
+      <text x="350" y="348">（order 1─* ticket）</text>
+      <text x="350" y="370">（station 1─* ticket）</text>
+
+      <text x="590" y="282">coupon_template</text>
+      <text x="590" y="304">coupon</text>
+      <text x="590" y="326">promotion</text>
+      <text x="590" y="348">（coupon→member）</text>
+
+      <text x="30" y="482">staff ── role</text>
+      <text x="30" y="504">（staff.role_id→role）</text>
+      <text x="410" y="482">config</text>
+      <text x="410" y="504">operation_log</text>
+    </g>
+
+    <!-- 关联线 -->
+    <g stroke="#9aa1ab" stroke-width="1.4" fill="none" marker-end="url(#a)">
+      <!-- 菜单->订单 -->
+      <path d="M124,214 C124,224 164,224 164,234"/>
+      <!-- 桌台->订单 -->
+      <path d="M364,214 C364,224 230,224 230,234"/>
+      <!-- 会员->订单 -->
+      <path d="M620,214 C620,230 300,230 300,234"/>
+      <!-- 订单->后厨 -->
+      <path d="M314,334 C330,344 340,344 350,354"/>
+      <!-- 订单->营销 coupon -->
+      <path d="M514,314 C560,314 580,300 590,292"/>
+      <!-- 成员->营销 -->
+      <path d="M620,214 C620,250 660,250 660,254"/>
+      <!-- 门店->各域(示意) 省略避免杂乱 -->
+    </g>
+    <defs>
+      <marker id="a" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+        <path d="M0,0 L6,3 L0,6 Z" fill="#9aa1ab"/>
+      </marker>
+    </defs>
+  </svg>
+  </div>
+  <div class="legend">
+    <span><i style="background:#eaf2ff;border:1px solid #bcd3ff"></i>门店/菜单</span>
+    <span><i style="background:#e9f8ef;border:1px solid #b6e6c8"></i>桌台/场景</span>
+    <span><i style="background:#f3edff;border:1px solid #d3c4ff"></i>会员/顾客</span>
+    <span><i style="background:#fdece9;border:1px solid #f6c3ba"></i>订单/交易</span>
+    <span><i style="background:#fff3e0;border:1px solid #f5d49b"></i>后厨/履约</span>
+    <span><i style="background:#fdeaf3;border:1px solid #f3bfd9"></i>营销</span>
+    <span><i style="background:#eef0f2;border:1px solid #cdd2d8"></i>权限/配置</span>
+  </div>
+
+  <h3>关系矩阵（核心外键）</h3>
+  <table>
+    <thead><tr><th>子表</th><th>关联字段</th><th>父表</th><th>关系</th></tr></thead>
+    <tbody>
+      <tr><td>category / dish / dining_table / staff / config / printer / kitchen_station</td><td><code>shop_id</code></td><td class="fk">shop</td><td>多对一（租户隔离）</td></tr>
+      <tr><td>dish</td><td><code>category_id</code></td><td class="fk">category</td><td>多对一</td></tr>
+      <tr><td>dish_spec</td><td><code>dish_id</code></td><td class="fk">dish</td><td>一对多（=规格组）</td></tr>
+      <tr><td>dish_spec_option</td><td><code>spec_id</code></td><td class="fk">dish_spec</td><td>一对多（=选项）</td></tr>
+      <tr><td>dish_sku</td><td><code>dish_id</code></td><td class="fk">dish</td><td>一对多（售卖单元）</td></tr>
+      <tr><td>cart / order / review / reservation / queue / points_log / balance_log / member_address / coupon</td><td><code>member_id</code></td><td class="fk">member</td><td>多对一</td></tr>
+      <tr><td>member</td><td><code>level_id</code></td><td class="fk">member_level</td><td>多对一</td></tr>
+      <tr><td>order（堂食）</td><td><code>table_id</code></td><td class="fk">dining_table</td><td>多对一</td></tr>
+      <tr><td>reservation</td><td><code>table_id</code></td><td class="fk">dining_table</td><td>多对一（包间）</td></tr>
+      <tr><td>cart_item</td><td><code>cart_id / dish_id / sku_id</code></td><td class="fk">cart / dish / dish_sku</td><td>多对一</td></tr>
+      <tr><td>order_item</td><td><code>order_id / dish_id / sku_id</code></td><td class="fk">order / dish / dish_sku</td><td>多对一（快照）</td></tr>
+      <tr><td>order_payment</td><td><code>order_id</code></td><td class="fk">order</td><td>一对多（可多次退款）</td></tr>
+      <tr><td>kitchen_ticket</td><td><code>order_id / station_id / printer_id</code></td><td class="fk">order / kitchen_station / printer</td><td>一对多（按档口分单）</td></tr>
+      <tr><td>coupon</td><td><code>template_id</code></td><td class="fk">coupon_template</td><td>多对一</td></tr>
+      <tr><td>staff</td><td><code>role_id</code></td><td class="fk">role</td><td>多对一</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- 5 详细定义 -->
+<section id="s5">
+  <h2>5. 表详细定义</h2>
+  <p class="note">约定：所有表含 <code class="inl">id</code> BIGINT 主键、<code class="inl">shop_id</code> 租户、<code class="inl">created_at/updated_at</code> 时间戳、<code class="inl">deleted_at</code> 软删（NULL 为未删）。金额类字段统一用 <b>INT（单位：分）</b> 避免浮点误差。<span class="pk">PK</span>=主键 <span class="fk">FK</span>=外键。</p>
+
+  <h3><span class="dom d-menu">门店 / 菜单域</span></h3>
+  <table>
+    <thead><tr><th>表</th><th>字段</th><th>类型</th><th>说明</th></tr></thead>
+    <tbody>
+      <tr><td rowspan="7"><b>shop</b></td><td><code>id</code></td><td>BIGINT <span class="pk">PK</span></td><td>门店ID</td></tr>
+      <tr><td><code>name</code></td><td>VARCHAR(64)</td><td>店名「膳房·中餐」</td></tr>
+      <tr><td><code>business_hours</code></td><td>VARCHAR(128)</td><td>营业时间JSON</td></tr>
+      <tr><td><code>mch_id</code></td><td>VARCHAR(32)</td><td>微信支付商户号</td></tr>
+      <tr><td><code>logo_url</code></td><td>VARCHAR(255)</td><td>店铺Logo</td></tr>
+      <tr><td><code>status</code></td><td>TINYINT</td><td>0停用 1营业</td></tr>
+      <tr><td><code>created_at/updated_at/deleted_at</code></td><td>DATETIME</td><td>标准字段</td></tr>
+
+      <tr><td rowspan="6"><b>category</b></td><td><code>id</code></td><td>BIGINT <span class="pk">PK</span></td><td>分类ID</td></tr>
+      <tr><td><code>shop_id</code></td><td>BIGINT <span class="fk">FK</span></td><td>门店</td></tr>
+      <tr><td><code>name</code></td><td>VARCHAR(32)</td><td>热菜/凉菜…</td></tr>
+      <tr><td><code>sort</code></td><td>INT</td><td>展示排序</td></tr>
+      <tr><td><code>is_show</code></td><td>TINYINT</td><td>是否上架</td></tr>
+      <tr><td><code>deleted_at</code></td><td>DATETIME</td><td>软删</td></tr>
+
+      <tr><td rowspan="9"><b>dish</b></td><td><code>id</code></td><td>BIGINT <span class="pk">PK</span></td><td>菜品ID</td></tr>
+      <tr><td><code>shop_id</code></td><td>BIGINT <span class="fk">FK</span></td><td>门店</td></tr>
+      <tr><td><code>category_id</code></td><td>BIGINT <span class="fk">FK</span></td><td>所属分类</td></tr>
+      <tr><td><code>name</code></td><td>VARCHAR(64)</td><td>菜名</td></tr>
+      <tr><td><code>base_price</code></td><td>INT</td><td>基础价（分）</td></tr>
+      <tr><td><code>cost_price</code></td><td>INT</td><td>成本价（分，<b>仅后台可见</b>）</td></tr>
+      <tr><td><code>is_weight</code></td><td>TINYINT</td><td>是否称重（按斤计价）</td></tr>
+      <tr><td><code>default_spicy</code></td><td>TINYINT</td><td>默认辣度(0免1微2中3特)</td></tr>
+      <tr><td><code>status</code></td><td>TINYINT</td><td>0下架 1在售 2售罄</td></tr>
+
+      <tr><td rowspan="5"><b>dish_spec</b></td><td><code>id</code></td><td>BIGINT <span class="pk">PK</span></td><td>规格组ID</td></tr>
+      <tr><td><code>dish_id</code></td><td>BIGINT <span class="fk">FK</span></td><td>所属菜品</td></tr>
+      <tr><td><code>name</code></td><td>VARCHAR(32)</td><td>「份量」「辣度」「忌口」</td></tr>
+      <tr><td><code>type</code></td><td>TINYINT</td><td>1单选 2多选</td></tr>
+      <tr><td><code>required</code></td><td>TINYINT</td><td>是否必选</td></tr>
+
+      <tr><td rowspan="6"><b>dish_spec_option</b></td><td><code>id</code></td><td>BIGINT <span class="pk">PK</span></td><td>选项ID</td></tr>
+      <tr><td><code>spec_id</code></td><td>BIGINT <span class="fk">FK</span></td><td>所属规格组</td></tr>
+      <tr><td><code>label</code></td><td>VARCHAR(32)</td><td>大/小/半份；微/中/特/免</td></tr>
+      <tr><td><code>price_delta</code></td><td>INT</td><td>差价（分，可负）</td></tr>
+      <tr><td><code>sort</code></td><td>INT</td><td>排序</td></tr>
+      <tr><td><code>is_default</code></td><td>TINYINT</td><td>是否默认选中</td></tr>
+
+      <tr><td rowspan="7"><b>dish_sku</b></td><td><code>id</code></td><td>BIGINT <span class="pk">PK</span></td><td>售卖单元ID</td></tr>
+      <tr><td><code>dish_id</code></td><td>BIGINT <span class="fk">FK</span></td><td>菜品</td></tr>
+      <tr><td><code>spec_path</code></td><td>VARCHAR(128)</td><td>选项组合，如 "12,34"（去重索引）</td></tr>
+      <tr><td><code>price</code></td><td>INT</td><td>组合最终价（分）</td></tr>
+      <tr><td><code>stock</code></td><td>INT</td><td>库存(-1无限)</td></tr>
+      <tr><td><code>bar_code</code></td><td>VARCHAR(64)</td><td>后厨/收银条码</td></tr>
+      <tr><td><code>status</code></td><td>TINYINT</td><td>启用/停用</td></tr>
+    </tbody>
+  </table>
+
+  <h3><span class="dom d-table">桌台 / 场景域</span></h3>
+  <table>
+    <thead><tr><th>表</th><th>字段</th><th>类型</th><th>说明</th></tr></thead>
+    <tbody>
+      <tr><td rowspan="9"><b>dining_table</b></td><td><code>id</code></td><td>BIGINT <span class="pk">PK</span></td><td>桌台ID</td></tr>
+      <tr><td><code>shop_id</code></td><td>BIGINT <span class="fk">FK</span></td><td>门店</td></tr>
+      <tr><td><code>table_no</code></td><td>VARCHAR(16)</td><td>A01 / 包间1</td></tr>
+      <tr><td><code>area</code></td><td>VARCHAR(16)</td><td>大厅 / 包间 / 露台</td></tr>
+      <tr><td><code>seats</code></td><td>INT</td><td>座位数</td></tr>
+      <tr><td><code>status</code></td><td>TINYINT</td><td>0空闲 1占用 2预定 3清洁中</td></tr>
+      <tr><td><code>current_order_id</code></td><td>BIGINT</td><td>当前订单（占用时）</td></tr>
+      <tr><td><code>qr_token</code></td><td>VARCHAR(64)</td><td>扫码落座二维码内容</td></tr>
+      <tr><td><code>version</code></td><td>INT</td><td>乐观锁（防并发改状态）</td></tr>
+
+      <tr><td rowspan="8"><b>reservation</b></td><td><code>id</code></td><td>BIGINT <span class="pk">PK</span></td><td>预订ID</td></tr>
+      <tr><td><code>shop_id</code></td><td>BIGINT <span class="fk">FK</span></td><td>门店</td></tr>
+      <tr><td><code>member_id</code></td><td>BIGINT <span class="fk">FK</span></td><td>预订人</td></tr>
+      <tr><td><code>table_id</code></td><td>BIGINT <span class="fk">FK</span></td><td>指定桌/包间</td></tr>
+      <tr><td><code>date / time_slot</code></td><td>DATE / VARCHAR</td><td>日期/时段</td></tr>
+      <tr><td><code>party_size</code></td><td>INT</td><td>人数</td></tr>
+      <tr><td><code>deposit</code></td><td>INT</td><td>订金（分）</td></tr>
+      <tr><td><code>status</code></td><td>TINYINT</td><td>0待确认 1已确认 2到店 3取消 4爽约</td></tr>
+
+      <tr><td rowspan="6"><b>queue</b></td><td><code>id</code></td><td>BIGINT <span class="pk">PK</span></td><td>排队ID</td></tr>
+      <tr><td><code>shop_id</code></td><td>BIGINT <span class="fk">FK</span></td><td>门店</td></tr>
+      <tr><td><code>ticket_no</code></td><td>VARCHAR(16)</td><td>取号码 A012</td></tr>
+      <tr><td><code>party_size</code></td><td>INT</td><td>人数</td></tr>
+      <tr><td><code>status</code></td><td>TINYINT</td><td>0等待 1叫号 2入座 3过号 4取消</td></tr>
+      <tr><td><code>called_at</code></td><td>DATETIME</td><td>叫号时间</td></tr>
+    </tbody>
+  </table>
+
+  <h3><span class="dom d-member">会员 / 顾客域</span></h3>
+  <table>
+    <thead><tr><th>表</th><th>字段</th><th>类型</th><th>说明</th></tr></thead>
+    <tbody>
+      <tr><td rowspan="11"><b>member</b></td><td><code>id</code></td><td>BIGINT <span class="pk">PK</span></td><td>会员ID</td></tr>
+      <tr><td><code>shop_id</code></td><td>BIGINT <span class="fk">FK</span></td><td>门店</td></tr>
+      <tr><td><code>openid</code></td><td>VARCHAR(64)</td><td>微信唯一标识（<b>登录凭证</b>）</td></tr>
+      <tr><td><code>unionid</code></td><td>VARCHAR(64)</td><td>跨应用统一ID（可选）</td></tr>
+      <tr><td><code>phone</code></td><td>VARCHAR(20)</td><td>手机号（授权后）</td></tr>
+      <tr><td><code>nickname / avatar</code></td><td>VARCHAR</td><td>昵称/头像</td></tr>
+      <tr><td><code>level_id</code></td><td>BIGINT <span class="fk">FK</span></td><td>会员等级</td></tr>
+      <tr><td><code>points</code></td><td>INT</td><td>积分余额</td></tr>
+      <tr><td><code>balance</code></td><td>INT</td><td>储值余额（分）</td></tr>
+      <tr><td><code>is_blocked</code></td><td>TINYINT</td><td>是否拉黑</td></tr>
+      <tr><td><code>last_active_at</code></td><td>DATETIME</td><td>最近活跃</td></tr>
+
+      <tr><td rowspan="5"><b>member_level</b></td><td><code>id</code></td><td>BIGINT <span class="pk">PK</span></td><td>等级ID</td></tr>
+      <tr><td><code>shop_id</code></td><td>BIGINT <span class="fk">FK</span></td><td>门店</td></tr>
+      <tr><td><code>name</code></td><td>VARCHAR(32)</td><td>普通/银卡/金卡</td></tr>
+      <tr><td><code>discount</code></td><td>DECIMAL(3,2)</td><td>折扣 0.90</td></tr>
+      <tr><td><code>threshold</code></td><td>INT</td><td>升级消费门槛（分）</td></tr>
+
+      <tr><td rowspan="5"><b>points_log</b></td><td><code>id</code></td><td>BIGINT <span class="pk">PK</span></td><td>流水ID</td></tr>
+      <tr><td><code>member_id</code></td><td>BIGINT <span class="fk">FK</span></td><td>会员</td></tr>
+      <tr><td><code>change</code></td><td>INT</td><td>变化值（正得负耗）</td></tr>
+      <tr><td><code>type</code></td><td>VARCHAR(16)</td><td>consume/earn/expire</td></tr>
+      <tr><td><code>ref_id</code></td><td>BIGINT</td><td>关联订单/活动</td></tr>
+
+      <tr><td rowspan="5"><b>member_address</b></td><td><code>id</code></td><td>BIGINT <span class="pk">PK</span></td><td>地址ID</td></tr>
+      <tr><td><code>member_id</code></td><td>BIGINT <span class="fk">FK</span></td><td>会员</td></tr>
+      <tr><td><code>contact / phone</code></td><td>VARCHAR</td><td>联系人/电话</td></tr>
+      <tr><td><code>detail</code></td><td>VARCHAR(255)</td><td>详细地址</td></tr>
+      <tr><td><code>is_default</code></td><td>TINYINT</td><td>默认地址</td></tr>
+    </tbody>
+  </table>
+
+  <h3><span class="dom d-order">订单 / 交易域</span></h3>
+  <table>
+    <thead><tr><th>表</th><th>字段</th><th>类型</th><th>说明</th></tr></thead>
+    <tbody>
+      <tr><td rowspan="14"><b>order</b></td><td><code>id</code></td><td>BIGINT <span class="pk">PK</span></td><td>订单ID</td></tr>
+      <tr><td><code>shop_id</code></td><td>BIGINT <span class="fk">FK</span></td><td>门店</td></tr>
+      <tr><td><code>order_no</code></td><td>VARCHAR(32)</td><td>业务单号（唯一索引，幂等）</td></tr>
+      <tr><td><code>type</code></td><td>TINYINT</td><td>1堂食 2外卖 3自提（<b>同表多场景</b>）</td></tr>
+      <tr><td><code>member_id</code></td><td>BIGINT <span class="fk">FK</span></td><td>下单会员</td></tr>
+      <tr><td><code>table_id</code></td><td>BIGINT <span class="fk">FK</span></td><td>堂食桌台（可空）</td></tr>
+      <tr><td><code>status</code></td><td>TINYINT</td><td>状态机（见第6节）</td></tr>
+      <tr><td><code>people_count</code></td><td>INT</td><td>就餐人数</td></tr>
+      <tr><td><code>total_amount</code></td><td>INT</td><td>原价合计（分）</td></tr>
+      <tr><td><code>discount_amount</code></td><td>INT</td><td>优惠合计（分）</td></tr>
+      <tr><td><code>pay_amount</code></td><td>INT</td><td>实付（分）</td></tr>
+      <tr><td><code>coupon_id</code></td><td>BIGINT</td><td>使用券</td></tr>
+      <tr><td><code>paid_at</code></td><td>DATETIME</td><td>支付时间</td></tr>
+      <tr><td><code>version</code></td><td>INT</td><td>乐观锁（防重复支付/接单）</td></tr>
+
+      <tr><td rowspan="9"><b>order_item</b></td><td><code>id</code></td><td>BIGINT <span class="pk">PK</span></td><td>明细ID</td></tr>
+      <tr><td><code>order_id</code></td><td>BIGINT <span class="fk">FK</span></td><td>订单</td></tr>
+      <tr><td><code>dish_id</code></td><td>BIGINT <span class="fk">FK</span></td><td>菜品（快照引用）</td></tr>
+      <tr><td><code>sku_id</code></td><td>BIGINT <span class="fk">FK</span></td><td>售卖单元</td></tr>
+      <tr><td><code>dish_name</code></td><td>VARCHAR(64)</td><td>落定快照名（防改菜单影响历史）</td></tr>
+      <tr><td><code>qty</code></td><td>INT</td><td>数量</td></tr>
+      <tr><td><code>unit_price</code></td><td>INT</td><td>单价（分，落定）</td></tr>
+      <tr><td><code>specs_json</code></td><td>JSON</td><td>规格/辣度/忌口快照</td></tr>
+      <tr><td><code>remark</code></td><td>VARCHAR(128)</td><td>备注（免葱/少辣）</td></tr>
+
+      <tr><td rowspan="8"><b>order_payment</b></td><td><code>id</code></td><td>BIGINT <span class="pk">PK</span></td><td>支付ID</td></tr>
+      <tr><td><code>order_id</code></td><td>BIGINT <span class="fk">FK</span></td><td>订单</td></tr>
+      <tr><td><code>pay_no</code></td><td>VARCHAR(64)</td><td>微信支付流水号（幂等键）</td></tr>
+      <tr><td><code>channel</code></td><td>VARCHAR(16)</td><td>wechat</td></tr>
+      <tr><td><code>amount</code></td><td>INT</td><td>金额（分）</td></tr>
+      <tr><td><code>status</code></td><td>TINYINT</td><td>0待支付 1成功 2失败 3退款</td></tr>
+      <tr><td><code>paid_at</code></td><td>DATETIME</td><td>支付完成时间</td></tr>
+      <tr><td><code>refund_no</code></td><td>VARCHAR(64)</td><td>退款单号</td></tr>
+
+      <tr><td rowspan="6"><b>cart</b></td><td><code>id</code></td><td>BIGINT <span class="pk">PK</span></td><td>购物车ID</td></tr>
+      <tr><td><code>shop_id / table_id</code></td><td>BIGINT</td><td>门店/桌台（<b>多人合单</b>按桌聚合）</td></tr>
+      <tr><td><code>member_id</code></td><td>BIGINT</td><td>建车人</td></tr>
+      <tr><td><code>expires_at</code></td><td>DATETIME</td><td>过期（Redis可替代）</td></tr>
+      <tr><td><code>status</code></td><td>TINYINT</td><td>0编辑中 1已下单</td></tr>
+
+      <tr><td rowspan="6"><b>cart_item</b></td><td><code>id</code></td><td>BIGINT <span class="pk">PK</span></td><td>明细ID</td></tr>
+      <tr><td><code>cart_id</code></td><td>BIGINT <span class="fk">FK</span></td><td>购物车</td></tr>
+      <tr><td><code>dish_id / sku_id</code></td><td>BIGINT <span class="fk">FK</span></td><td>菜品/单元</td></tr>
+      <tr><td><code>qty</code></td><td>INT</td><td>数量</td></tr>
+      <tr><td><code>specs_json</code></td><td>JSON</td><td>规格快照</td></tr>
+      <tr><td><code>remark</code></td><td>VARCHAR(128)</td><td>备注</td></tr>
+    </tbody>
+  </table>
+
+  <h3><span class="dom d-kitchen">后厨 / 履约域</span></h3>
+  <table>
+    <thead><tr><th>表</th><th>字段</th><th>类型</th><th>说明</th></tr></thead>
+    <tbody>
+      <tr><td rowspan="5"><b>kitchen_station</b></td><td><code>id</code></td><td>BIGINT <span class="pk">PK</span></td><td>档口ID</td></tr>
+      <tr><td><code>shop_id</code></td><td>BIGINT <span class="fk">FK</span></td><td>门店</td></tr>
+      <tr><td><code>name</code></td><td>VARCHAR(32)</td><td>热菜/凉菜/饮品/烧烤</td></tr>
+      <tr><td><code>printer_id</code></td><td>BIGINT</td><td>默认打印机</td></tr>
+      <tr><td><code>timeout_min</code></td><td>INT</td><td>出餐超时预警(分)</td></tr>
+
+      <tr><td rowspan="9"><b>kitchen_ticket</b></td><td><code>id</code></td><td>BIGINT <span class="pk">PK</span></td><td>分单ID</td></tr>
+      <tr><td><code>shop_id</code></td><td>BIGINT <span class="fk">FK</span></td><td>门店</td></tr>
+      <tr><td><code>order_id</code></td><td>BIGINT <span class="fk">FK</span></td><td>来源订单</td></tr>
+      <tr><td><code>station_id</code></td><td>BIGINT <span class="fk">FK</span></td><td>出单档口</td></tr>
+      <tr><td><code>printer_id</code></td><td>BIGINT <span class="fk">FK</span></td><td>打印设备</td></tr>
+      <tr><td><code>items_json</code></td><td>JSON</td><td>本档口菜品明细</td></tr>
+      <tr><td><code>status</code></td><td>TINYINT</td><td>0待做 1制作中 2完成 3退单</td></tr>
+      <tr><td><code>pushed_at</code></td><td>DATETIME</td><td>推单时间</td></tr>
+      <tr><td><code>done_at</code></td><td>DATETIME</td><td>完成时间</td></tr>
+
+      <tr><td rowspan="6"><b>printer</b></td><td><code>id</code></td><td>BIGINT <span class="pk">PK</span></td><td>打印机ID</td></tr>
+      <tr><td><code>shop_id</code></td><td>BIGINT <span class="fk">FK</span></td><td>门店</td></tr>
+      <tr><td><code>name</code></td><td>VARCHAR(32)</td><td>热菜打印机</td></tr>
+      <tr><td><code>type</code></td><td>TINYINT</td><td>1云打印 2蓝牙 3本地</td></tr>
+      <tr><td><code>device_sn</code></td><td>VARCHAR(64)</td><td>设备序列号</td></tr>
+      <tr><td><code>station_id</code></td><td>BIGINT</td><td>绑定档口</td></tr>
+    </tbody>
+  </table>
+
+  <h3><span class="dom d-mkt">营销域</span> · <span class="dom d-auth">权限/配置域</span></h3>
+  <table>
+    <thead><tr><th>表</th><th>字段</th><th>类型</th><th>说明</th></tr></thead>
+    <tbody>
+      <tr><td rowspan="7"><b>coupon_template</b></td><td><code>id</code></td><td>BIGINT <span class="pk">PK</span></td><td>模板ID</td></tr>
+      <tr><td><code>shop_id</code></td><td>BIGINT <span class="fk">FK</span></td><td>门店</td></tr>
+      <tr><td><code>name</code></td><td>VARCHAR(64)</td><td>满100减20</td></tr>
+      <tr><td><code>type</code></td><td>TINYINT</td><td>1满减 2折扣 3代金</td></tr>
+      <tr><td><code>threshold / value</code></td><td>INT</td><td>门槛/面额（分）</td></tr>
+      <tr><td><code>valid_from / valid_to</code></td><td>DATETIME</td><td>有效期</td></tr>
+
+      <tr><td rowspan="7"><b>coupon</b></td><td><code>id</code></td><td>BIGINT <span class="pk">PK</span></td><td>券ID</td></tr>
+      <tr><td><code>template_id</code></td><td>BIGINT <span class="fk">FK</span></td><td>模板</td></tr>
+      <tr><td><code>member_id</code></td><td>BIGINT <span class="fk">FK</span></td><td>持有会员</td></tr>
+      <tr><td><code>code</code></td><td>VARCHAR(32)</td><td>券码（唯一）</td></tr>
+      <tr><td><code>status</code></td><td>TINYINT</td><td>0未用 1已用 2过期 3作废</td></tr>
+      <tr><td><code>used_at</code></td><td>DATETIME</td><td>使用时间</td></tr>
+
+      <tr><td rowspan="6"><b>promotion</b></td><td><code>id</code></td><td>BIGINT <span class="pk">PK</span></td><td>活动ID</td></tr>
+      <tr><td><code>shop_id</code></td><td>BIGINT <span class="fk">FK</span></td><td>门店</td></tr>
+      <tr><td><code>type</code></td><td>TINYINT</td><td>1秒杀 2拼团 3满赠</td></tr>
+      <tr><td><code>scope</code></td><td>VARCHAR(128)</td><td>适用分类/菜品ID列表</td></tr>
+      <tr><td><code>start / end</code></td><td>DATETIME</td><td>活动期</td></tr>
+
+      <tr><td rowspan="6"><b>staff</b></td><td><code>id</code></td><td>BIGINT <span class="pk">PK</span></td><td>员工ID</td></tr>
+      <tr><td><code>shop_id</code></td><td>BIGINT <span class="fk">FK</span></td><td>门店</td></tr>
+      <tr><td><code>username / password</code></td><td>VARCHAR</td><td>账号/密码(加盐哈希)</td></tr>
+      <tr><td><code>role_id</code></td><td>BIGINT <span class="fk">FK</span></td><td>角色</td></tr>
+      <tr><td><code>real_name</code></td><td>VARCHAR(32)</td><td>姓名</td></tr>
+      <tr><td><code>status</code></td><td>TINYINT</td><td>0禁用 1启用</td></tr>
+
+      <tr><td rowspan="4"><b>role</b></td><td><code>id</code></td><td>BIGINT <span class="pk">PK</span></td><td>角色ID</td></tr>
+      <tr><td><code>name</code></td><td>VARCHAR(32)</td><td>老板/店长/服务员/后厨</td></tr>
+      <tr><td><code>perms</code></td><td>JSON</td><td>功能权限点列表</td></tr>
+      <tr><td><code>data_scope</code></td><td>TINYINT</td><td>1全店 2本桌 3本档口</td></tr>
+
+      <tr><td rowspan="5"><b>review</b></td><td><code>id</code></td><td>BIGINT <span class="pk">PK</span></td><td>评价ID</td></tr>
+      <tr><td><code>order_id</code></td><td>BIGINT <span class="fk">FK</span></td><td>订单</td></tr>
+      <tr><td><code>member_id</code></td><td>BIGINT <span class="fk">FK</span></td><td>会员</td></tr>
+      <tr><td><code>rating</code></td><td>TINYINT</td><td>1-5星</td></tr>
+      <tr><td><code>content</code></td><td>VARCHAR(512)</td><td>文字</td></tr>
+
+      <tr><td rowspan="4"><b>config</b></td><td><code>id</code></td><td>BIGINT <span class="pk">PK</span></td><td>配置ID</td></tr>
+      <tr><td><code>shop_id</code></td><td>BIGINT <span class="fk">FK</span></td><td>门店</td></tr>
+      <tr><td><code>k</code></td><td>VARCHAR(64)</td><td>键（如 auto_print）</td></tr>
+      <tr><td><code>v</code></td><td>JSON/TEXT</td><td>值</td></tr>
+
+      <tr><td rowspan="6"><b>operation_log</b></td><td><code>id</code></td><td>BIGINT <span class="pk">PK</span></td><td>日志ID</td></tr>
+      <tr><td><code>shop_id</code></td><td>BIGINT <span class="fk">FK</span></td><td>门店</td></tr>
+      <tr><td><code>staff_id</code></td><td>BIGINT</td><td>操作人</td></tr>
+      <tr><td><code>action</code></td><td>VARCHAR(64)</td><td>动作（改价/退款）</td></tr>
+      <tr><td><code>ref_type / ref_id</code></td><td>VARCHAR/BIGINT</td><td>对象</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- 6 边界 -->
+<section id="s6">
+  <h2>6. 关键边界设计</h2>
+
+  <div class="bound">
+    <b>① 业务边界（域解耦）</b>
+    <p>菜单域、交易域、履约域、会员域、营销域、权限域各自独立建表，通过 <code class="inl">order</code> 主表作为"聚合根"串起来。跨域操作（如"下单后推后厨分单"）由服务层事务保证，不在数据库层硬耦合。好处：改菜单价不影响历史订单（订单明细已快照）。</p>
+  </div>
+
+  <div class="bound">
+    <b>② 数据边界（隔离 / 软删 / 审计）</b>
+    <ul class="tight">
+      <li><b>租户隔离</b>：每张业务表带 <code class="inl">shop_id</code>，所有查询必须带该条件，单店与未来连锁共用同一套结构。</li>
+      <li><b>软删除</b>：统一 <code class="inl">deleted_at</code>，不物理删，便于对账与恢复（订单/会员/菜品永不物理删）。</li>
+      <li><b>快照</b>：<code class="inl">order_item</code> 存 <code class="inl">dish_name / unit_price / specs_json</code> 落定快照，菜品后续改名改价不影响历史账单。</li>
+      <li><b>审计</b>：<code class="inl">operation_log</code> + <code class="inl">points_log / balance_log</code> 记录资金与权益变动，可追溯。</li>
+    </ul>
+  </div>
+
+  <div class="bound warn">
+    <b>③ 并发边界（防超卖 / 重复支付 / 重复接单）</b>
+    <ul class="tight">
+      <li><b>乐观锁</b>：<code class="inl">order.version</code>、<code class="inl">dining_table.version</code> 更新时校验版本，失败重试。</li>
+      <li><b>幂等</b>：<code class="inl">order.order_no</code>、<code class="inl">order_payment.pay_no</code> 唯一索引，重复提交直接返回原结果。</li>
+      <li><b>状态机约束</b>：状态只许按合法路径流转（见下），非法变更在 service 层拒绝。</li>
+      <li><b>分布式锁</b>：接单、改桌台状态、库存扣减用 Redis 锁，避免多服务员同时操作冲突。</li>
+    </ul>
+  </div>
+
+  <div class="bound ok">
+    <b>④ 金额边界（分单位 + 服务端计算）</b>
+    <ul class="tight">
+      <li>所有金额用 <b>INT（分）</b> 存储与传输，杜绝浮点误差；前端仅做 ÷100 展示。</li>
+      <li>优惠（满减/折扣/券/会员折扣）全部在 <b>服务端计算</b>，<code class="inl">pay_amount = total - discount</code>，前端传的"优惠金额"只作展示、不被信任。</li>
+      <li>退款走 <code class="inl">order_payment</code> 新记录（status=3），原支付保留，账目清晰。</li>
+    </ul>
+  </div>
+
+  <div class="bound">
+    <b>⑤ 状态机边界（核心实体）
+
+    <p style="margin:6px 0"><b>order.status</b>（同表承载堂食/外卖/自提，状态语义一致）：</p>
+    <pre>待支付(0) → 已支付/待接单(1) → 制作中(2) → 已上菜/待取餐(3)
+   → 已完成(4) ─┐
+待支付 ──取消(9)  ├─ 任意非终态 ──退款中(5) ──已退款(6)
+制作中/待接单 ──退单(7)</pre>
+    <p style="margin:6px 0"><b>dining_table.status</b>：空闲(0) → 预定(2) → 占用(1) → 清洁中(3) → 空闲(0)<br>
+    <b>order_payment.status</b>：待支付(0) → 成功(1) / 失败(2) → 退款(3)<br>
+    <b>kitchen_ticket.status</b>：待做(0) → 制作中(1) → 完成(2) / 退单(3)</p>
+    <p class="note">非法流转（如"已完成"再改"制作中"）在 service 层用状态机校验拦截。</p>
+  </div>
+
+  <div class="bound warn">
+    <b>⑥ 权限边界（谁能看/改什么）</b>
+    <ul class="tight">
+      <li><b>小程序端</b>：只能读写 <code class="inl">member_id = 自己</code> 的数据（订单/购物车/优惠券/评价），菜单为公开只读。</li>
+      <li><b>后台端</b>：按 <code class="inl">role.data_scope</code> 控制——老板/店长全店；服务员仅本桌；后厨仅本档口（<code class="inl">kitchen_ticket.station_id</code> 过滤）。</li>
+      <li><b>字段级</b>：<code class="inl">dish.cost_price</code>、利润类字段只在后台 API 返回，小程序 API 字段白名单剔除。</li>
+    </ul>
+  </div>
+</section>
+
+<!-- 7 多端兼容 -->
+<section id="s7">
+  <h2>7. 多端兼容设计（一套库服务小程序 + 后台）</h2>
+  <p class="lead">核心思想：<b>数据库与业务服务只有一套</b>，差异只在"接入身份"与"可见范围"。</p>
+
+  <table>
+    <thead><tr><th>维度</th><th>小程序端（顾客）</th><th>后台管理系统（商家）</th></tr></thead>
+    <tbody>
+      <tr><td><b>接入身份</b></td><td>微信 openid → 解析出 <code class="inl">member_id</code></td><td><code class="inl">staff</code> + <code class="inl">role</code> 登录令牌</td></tr>
+      <tr><td><b>数据范围</b></td><td>仅 <code class="inl">member_id=自己</code> + 公开菜单</td><td>全店（按 role.data_scope 收缩）</td></tr>
+      <tr><td><b>同表复用</b></td><td colspan="2">order / dish / dining_table / coupon 等<b>同一张表</b>，靠 <code class="inl">type</code>、<code class="inl">member_id</code>、<code class="inl">status</code> 区分场景，不建副本</td></tr>
+      <tr><td><b>字段可见性</b></td><td>白名单返回（隐藏成本/利润/员工字段）</td><td>全字段 + 管理字段</td></tr>
+      <tr><td><b>写操作</b></td><td>下单、加菜、支付、评价、预约</td><td>改菜单、接单、出餐、退款、配置</td></tr>
+      <tr><td><b>实时同步</b></td><td>轮询/订阅消息看订单状态</td><td>KDS/后台长连接看订单与出单</td></tr>
+    </tbody>
+  </table>
+
+  <div class="bound ok">
+    <b>兼容落地的 4 个关键设计</b>
+    <ul class="tight">
+      <li><b>① 路由分层共享服务</b>：<code class="inl">/api/client/*</code> 与 <code class="inl">/api/admin/*</code> 两套路由，但共用同一 Service / DAO 层与同一数据库——避免逻辑分叉导致数据不一致。</li>
+      <li><b>② 场景字段复用</b>：<code class="inl">order.type ∈ {1堂食,2外卖,3自提}</code> 让三种业态落在同一订单表与同一状态机；新增业态（如"预约自提"）只需加枚举，不改表结构。</li>
+      <li><b>③ 桌台二维码双用</b>：<code class="inl">dining_table.qr_token</code> 既被小程序扫码落座，也被后台打印绑定，同一字段服务两端。</li>
+      <li><b>④ 状态机单一真相</b>：无论小程序"催菜"还是后台"出餐"，都走同一套 <code class="inl">order.status</code> 状态机；两端靠 <code class="inl">updated_at</code>/版本号保持一致，杜绝"顾客付了钱后厨不知道"。</li>
+    </ul>
+  </div>
+
+  <p class="note">由此，所谓"小程序一套、后台一套"在数据库层面不成立——<b>只有一套库</b>。是否"自建"的区别只是：SaaS 帮你把这套表和服务都搭好了；自建则需要按本文档把 26 张表与服务实现出来。</p>
+</section>
+
+<!-- 8 索引 -->
+<section id="s8">
+  <h2>8. 索引与性能建议</h2>
+  <ul class="tight">
+    <li><b>唯一索引</b>：<code class="inl">order(order_no)</code>、<code class="inl">order_payment(pay_no)</code>、<code class="inl">coupon(code)</code>、<code class="inl">member(openid, shop_id)</code>、<code class="inl">dish_sku(spec_path, dish_id)</code>。</li>
+    <li><b>普通索引</b>：各表 <code class="inl">shop_id</code>；<code class="inl">order(shop_id, status, created_at)</code>（报表/待接单列表）；<code class="inl">order(member_id)</code>；<code class="inl">order(table_id, status)</code>；<code class="inl">kitchen_ticket(station_id, status)</code>。</li>
+    <li><b>Redis 缓存</b>：菜单树（category+dish+sku）、桌台实时状态、购物车、排队号——高读低频写，显著降主库压力。</li>
+    <li><b>分表/归档</b>：<code class="inl">order / order_payment / operation_log</code> 按月归档，单店日单量不大可先不分。</li>
+  </ul>
+</section>
+
+<!-- 9 DDL -->
+<section id="s9">
+  <h2>9. 建表示例（DDL 节选）</h2>
+  <p class="note">仅示例核心表结构（MySQL 8），完整 26 张表按第 5 节字段落地。</p>
+  <pre>CREATE TABLE `order` (
+  `id`            BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `shop_id`       BIGINT NOT NULL,
+  `order_no`      VARCHAR(32) NOT NULL,
+  `type`          TINYINT NOT NULL DEFAULT 1 COMMENT '1堂食2外卖3自提',
+  `member_id`     BIGINT NOT NULL,
+  `table_id`      BIGINT DEFAULT NULL,
+  `status`        TINYINT NOT NULL DEFAULT 0,
+  `people_count`  INT DEFAULT 1,
+  `total_amount`  INT NOT NULL DEFAULT 0 COMMENT '分',
+  `discount_amount` INT NOT NULL DEFAULT 0,
+  `pay_amount`    INT NOT NULL DEFAULT 0,
+  `coupon_id`     BIGINT DEFAULT NULL,
+  `paid_at`       DATETIME DEFAULT NULL,
+  `version`       INT NOT NULL DEFAULT 0,
+  `created_at`    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at`    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `deleted_at`    DATETIME DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_order_no` (`order_no`),
+  KEY `idx_shop_status` (`shop_id`,`status`,`created_at`),
+  KEY `idx_member` (`member_id`),
+  KEY `idx_table` (`table_id`,`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `kitchen_ticket` (
+  `id`          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `shop_id`     BIGINT NOT NULL,
+  `order_id`    BIGINT NOT NULL,
+  `station_id`  BIGINT NOT NULL,
+  `printer_id`  BIGINT DEFAULT NULL,
+  `items_json`  JSON,
+  `status`      TINYINT NOT NULL DEFAULT 0,
+  `pushed_at`   DATETIME DEFAULT NULL,
+  `done_at`     DATETIME DEFAULT NULL,
+  `created_at`  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_station` (`station_id`,`status`),
+  KEY `idx_order` (`order_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;</pre>
+</section>
+
+<!-- 10 -->
+<section id="s10">
+  <h2>10. 后续迭代建议</h2>
+  <ul class="tight">
+    <li><b>v1（MVP/P0）</b>：shop、category、dish、dish_spec、dish_spec_option、dish_sku、dining_table、member、cart、cart_item、order、order_item、order_payment、kitchen_station、kitchen_ticket、staff、role、config —— 满足点餐→支付→出餐闭环。</li>
+    <li><b>v1.1（P1）</b>：member_level、member_address、points_log、balance_log、reservation、queue、printer、coupon_template、coupon、review、operation_log —— 会员/营销/预约/排队。</li>
+    <li><b>v2（P2）</b>：promotion（秒杀/拼团）、多门店（强化 shop_id 隔离）、数据看板汇总表。</li>
+    <li><b>与现有产出衔接</b>：本数据库文档对应《PRD_v1》的功能清单与《原型_v1》的页面字段——可逐表核对原型里每个输入框/列表都有对应字段落库。</li>
+  </ul>
+</section>
+
+<footer>点餐小程序 · 后端数据库设计文档 v1 · 中餐单店场景 · 26 张表 / 一套库服务三端</footer>
+</main>
+</div>
+</body>
+</html>

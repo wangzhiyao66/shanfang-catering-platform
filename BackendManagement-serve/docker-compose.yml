@@ -1,0 +1,12 @@
+# 仅起 Redis（MySQL 8.0.18 用你本机已运行的实例，直连 localhost:3306）。
+# 用法：在 BackendManagement-serve/ 目录执行  docker compose up -d redis
+version: "3.8"
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: ordering-redis
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--appendonly", "no"]
+    restart: unless-stopped

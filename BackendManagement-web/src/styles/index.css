@@ -1,0 +1,22 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, 'PingFang SC', 'Microsoft YaHei', Helvetica, Arial, sans-serif;
+  color: #1f2329;
+  background: #f5f6f8;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}

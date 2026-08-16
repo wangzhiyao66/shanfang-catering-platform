@@ -1,0 +1,18 @@
+/* app.wxss — 全局样式与品牌变量 */
+page {
+  --brand: #e8543f;       /* 中餐品牌红，可在后台统一更换 */
+  --brand-soft: #fce9e5;
+  --ink: #1f2329;
+  --sub: #646a73;
+  --line: #e5e6eb;
+  --bg: #f7f8fa;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+.page-pad { padding-bottom: 120rpx; }   /* 给底部购物车条留白 */
+
+.muted { color: var(--sub); font-size: 24rpx; }
+.price { color: var(--brand); font-weight: 600; }
+.price::before { content: "¥"; font-size: 22rpx; }

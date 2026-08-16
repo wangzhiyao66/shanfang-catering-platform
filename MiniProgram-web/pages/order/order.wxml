@@ -1,0 +1,27 @@
+<!-- pages/order/order.wxml -->
+<view class="order page-pad">
+  <van-tabs active="{{active}}" bind:change="onTab" swipeable>
+    <van-tab title="{{item}}" wx:for="{{tabs}}" wx:key="*this"></van-tab>
+  </van-tabs>
+
+  <view class="card" wx:for="{{orders}}" wx:key="id">
+    <view class="card-head">
+      <text>订单 {{item.orderNo}}</text>
+      <text class="price">¥{{item.payAmount/100}}</text>
+    </view>
+    <view class="status">{{item.statusText}}</view>
+
+    <view class="dish-line" wx:for="{{item.items}}" wx:for-item="d" wx:key="name">
+      {{d.name}} <text class="muted" wx:if="{{d.specs}}">{{d.specs}} </text> <text class="muted">x{{d.qty}}</text>
+    </view>
+    <view class="muted" wx:if="{{item.items.length===0}}">（菜品明细以出餐为准）</view>
+
+    <van-steps steps="{{steps}}" active="{{item.step}}" wx:if="{{item.showSteps}}" />
+
+    <view class="card-ops" wx:if="{{item.status===2 || item.status===3}}">
+      <van-button size="small" type="warning" bindtap="urge" data-id="{{item.id}}">催菜</van-button>
+    </view>
+  </view>
+
+  <van-empty wx:if="{{orders.length===0}}" description="暂无订单" />
+</view>

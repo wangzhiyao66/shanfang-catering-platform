@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>点餐小程序 · 后端技术选型与实现方案 v1（Spring Boot）</title>
+<style>
+  :root{ --brand:#e8543f; --brand2:#ff7a59; --ink:#1f2329; --sub:#65676b; --line:#e8eaed; --bg:#f7f8fa; --ok:#1aad19; --warn:#e8543f; }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,"PingFang SC","Microsoft YaHei",Helvetica,Arial,sans-serif;color:var(--ink);background:var(--bg);line-height:1.7}
+  .wrap{max-width:980px;margin:0 auto;padding:32px 24px 64px}
+  header{border-bottom:3px solid var(--brand);padding-bottom:16px;margin-bottom:24px}
+  h1{font-size:26px;margin:0 0 6px}
+  .meta{color:var(--sub);font-size:13px}
+  h2{font-size:19px;margin:32px 0 12px;padding-left:10px;border-left:4px solid var(--brand)}
+  h3{font-size:15px;margin:20px 0 8px;color:var(--brand)}
+  p,li{font-size:14px;color:var(--ink)}
+  .lead{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px 20px;margin:16px 0}
+  .card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px 20px;margin:12px 0;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+  table{width:100%;border-collapse:collapse;background:#fff;border-radius:10px;overflow:hidden;font-size:13.5px;margin:10px 0}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+  th{background:#fafbfc;color:var(--sub);font-weight:600}
+  tr:nth-child(even) td{background:#fcfcfd}
+  code{background:#f2f3f5;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Consolas,monospace;font-size:12.5px;color:#c0341d}
+  .inl{background:#fff3f0;color:var(--brand);padding:1px 6px;border-radius:5px;font-family:monospace;font-size:12.5px}
+  .pill{display:inline-block;padding:2px 9px;border-radius:20px;font-size:12px;font-weight:600}
+  .p0{background:var(--brand);color:#fff}
+  .p1{background:#ffd9cf;color:#a8341c}
+  .p2{background:#e8eaed;color:#5a5d62}
+  .note{background:#fff8f5;border-left:4px solid var(--brand2);padding:10px 14px;border-radius:0 8px 8px 0;font-size:13px;color:#7a3a2c;margin:12px 0}
+  .ok{color:var(--ok);font-weight:600}
+  .warn{color:var(--warn);font-weight:600}
+  pre{background:#1f2329;color:#e6e6e6;padding:14px 16px;border-radius:10px;overflow:auto;font-size:12.5px;line-height:1.55;font-family:"SF Mono",Consolas,monospace}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:720px){.grid{grid-template-columns:1fr}}
+  footer{margin-top:40px;color:var(--sub);font-size:12px;text-align:center;border-top:1px solid var(--line);padding-top:16px}
+  .tree{background:#fbfbfc;border:1px dashed var(--line);border-radius:10px;padding:14px 18px;font-family:monospace;font-size:12.5px;line-height:1.6;white-space:pre;color:#333}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>点餐小程序 · 后端技术选型与实现方案 <span style="color:var(--brand)">v1</span></h1>
+  <div class="meta">中餐单店 · 三端共用一套库（小程序顾客端 / 商家后台 / 后厨端） · 配合《数据库设计文档_v1》《PRD_v1》· 已确认走 <b>Java Spring Boot</b> · 2026-08-15</div>
+</header>
+
+<div class="lead">
+  <b>结论（已确认栈）：</b> <span class="ok">Java 17 + Spring Boot 3.x</span> 作为后端框架，
+  ORM 用 <span class="inl">MyBatis-Plus</span>（内置多租户 + 乐观锁 + 分页，最贴本项目），
+  主库 <span class="inl">MySQL 8.0</span>，缓存/分布式锁用 <span class="inl">Redis</span> + <span class="inl">Redisson</span>，
+  图片走 <span class="inl">腾讯云 COS</span>，微信登录/支付用官方 v3 接口封装。
+  后端监听 <b>3000 端口</b>，路由前缀 <code>/api/client</code> 与 <code>/api/admin</code> 共用同一 Service/DAO 与同一数据库，与小程序 <code>request.js</code> 契约天然对齐。
+</div>
+
+<h2>1. 选型依据（现有文档的硬约束）</h2>
+<div class="card">
+  <ul>
+    <li><b>已定契约：</b>后端地址 <code>http://localhost:3000/api/client</code>；<code>/api/client/*</code> 与 <code>/api/admin/*</code> 两套路由<b>共用同一 Service/DAO 与同一数据库</b>（数据库文档 §6）。</li>
+    <li><b>返回格式：</b>统一 <code>{ code:0, data, msg }</code>；<code>401</code> 表示未登录触发重新授权（<code>MiniProgram-web/utils/request.js</code>）。</li>
+    <li><b>身份与租户：</b>请求头 <code>X-Openid</code>（解析会员）、<code>X-Shop-Id</code>（租户隔离）；每张业务表带 <code>shop_id</code>。</li>
+    <li><b>数据层：</b>关系型 <span class="inl">MySQL 8.0</span>（或 PG14）；高频/临时数据放 <span class="inl">Redis</span>；图片走对象存储（COS/OSS）。</li>
+    <li><b>并发边界：</b>接单、改桌台状态、库存扣减用 <b>Redis 分布式锁</b>；订单状态机用 <code>version</code> 乐观锁（数据库文档 §3、§5）。</li>
+    <li><b>外部集成：</b>微信登录（<code>code2session</code>）、微信支付 v3（返回 <code>payParams</code> 供 <code>wx.requestPayment</code>，需回调验签）。</li>
+    <li><b>性能目标：</b>午晚市高并发下单；下单→后厨出单 &lt; 3s；页面加载 &lt; 1.5s（PRD）。</li>
+  </ul>
+</div>
+
+<h2>2. 推荐技术栈（已确认：Spring Boot）</h2>
+<table>
+  <tr><th>层</th><th>选型</th><th>说明 / 备选</th></tr>
+  <tr><td>JDK</td><td><b>Java 17 (LTS)</b></td><td>Spring Boot 3 要求 JDK 17+；备选 Java 21</td></tr>
+  <tr><td>框架</td><td><b>Spring Boot 3.x</b></td><td>自动配置、内嵌 Tomcat；<code>server.port=3000</code> 对齐 request.js</td></tr>
+  <tr><td>Web / 鉴权</td><td><b>Spring MVC</b> + <b>Spring Validation</b> + <b>jjwt</b>(admin)</td><td>Interceptor 读 <code>X-Openid/X-Shop-Id</code>；后台 JWT</td></tr>
+  <tr><td>ORM</td><td><b>MyBatis-Plus</b></td><td>内置<b>多租户插件</b>（自动拼 <code>shop_id</code>）、<b>乐观锁</b>(<code>@Version</code>)、分页。备选 <b>JPA/Hibernate</b>（更"对象化"但复杂报表 SQL 不灵活）</td></tr>
+  <tr><td>主数据库</td><td><b>MySQL 8.0</b></td><td>数据库文档指定；连接池用 HikariCP（默认）</td></tr>
+  <tr><td>缓存 / 锁</td><td><b>Redis</b> + <b>Redisson</b></td><td>菜单树缓存、桌台状态、购物车、排队号；<b>Redisson 分布式锁</b>（接单/桌台/库存）、支付幂等</td></tr>
+  <tr><td>对象存储</td><td><b>腾讯云 COS</b>（Java SDK）</td><td>微信生态同源，服务端签名直传 + CDN；备选阿里 OSS</td></tr>
+  <tr><td>微信集成</td><td>登录 <code>code2session</code> 自建；支付 <b>微信支付 v3</b></td><td>库：<code>wechatpay-java</code> / 自封装 RSA 签名与平台证书；RestTemplate/WebClient 调微信</td></tr>
+  <tr><td>接口文档</td><td><b>SpringDoc OpenAPI</b>（Swagger UI）</td><td>三端联调单一接口源；Knife4j 可出更友好中文 UI</td></tr>
+  <tr><td>构建 / 配置</td><td><b>Maven</b> + <code>application.yml</code> 多环境</td><td>备选 Gradle；Nacos(可选) 做配置中心</td></tr>
+  <tr><td>测试</td><td><b>JUnit 5</b> + Mockito</td><td>订单状态机、支付幂等、分布式锁重点覆盖</td></tr>
+  <tr><td>部署</td><td>Spring Boot fat-jar → Docker + Nginx；腾讯云 轻量/CVM + TencentDB(MySQL/Redis)；HTTPS 必备</td><td>本地 <code>docker-compose</code> 起 mysql+redis；生产 Nginx 反代 + 域名备案</td></tr>
+</table>
+
+<h2>3. 为什么 Spring Boot（已选，附取舍）</h2>
+<div class="grid">
+  <div class="card">
+    <h3>选 Spring Boot 的优势</h3>
+    <ul>
+      <li><b>餐饮后台生态最成熟：</b>微信支付 v3、ERP/报表、权限(RBAC)、连锁多门店在 Java 社区资料最多，出问题好查。</li>
+      <li><b>事务与并发开箱即用：</b><code>@Transactional</code> 保证"下单→推后厨分单"原子；Redisson 分布式锁、MP 乐观锁直接对标数据库文档的并发边界。</li>
+      <li><b>多租户几乎免费：</b>MyBatis-Plus <code>TenantLineInnerInterceptor</code> 自动给每条 SQL 拼 <code>shop_id</code>，从源头杜绝越权——正好命中文档"所有查询必须带 shop_id"。</li>
+      <li><b>可演进：</b>未来上连锁、加定时报表、加 WebSocket（后厨 KDS 实时推送）都有现成方案。</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h3>需要注意的取舍</h3>
+    <ul>
+      <li><b>与前端语言不同：</b>小程序是 JS，后端是 Java，两端靠 REST 解耦（无影响），但团队需同时具备两种能力。</li>
+      <li><b>比 Node 重：</b>启动内存/构建略重，但单店量级完全无压力。</li>
+      <li><b>备选提示：</b>若只想最快跑通 demo、且团队只会 JS，可改回 <b>NestJS（Node/TS）</b>——契约同样零摩擦、更轻。确认走 Java 即按本方案推进。</li>
+    </ul>
+  </div>
+</div>
+
+<h2>4. 推荐项目结构（BackendManagement-serve，Maven 单体）</h2>
+<div class="tree">BackendManagement-serve/
+├── pom.xml
+├── docker-compose.yml                # mysql 8 + redis 本地开发
+├── src/main/java/com/xxx/ordering/
+│   ├── OrderingApplication.java       # @SpringBootApplication 启动类
+│   ├── common/
+│   │   ├── result/   R.java({code,data,msg})  BizException.java  CodeEnum
+│   │   ├── advice/   GlobalExceptionHandler(@RestControllerAdvice)  ResponseAdvice(ResponseBodyAdvice)
+│   │   ├── interceptor/ ShopInterceptor  OpenidInterceptor  JwtInterceptor
+│   │   ├── annotation/ @ShopId @Openid @Auth @LoginRequired
+│   │   ├── context/   ShopContext / MemberContext（ThreadLocal 存 shopId/openid）
+│   │   └── config/   WebMvcConfig  MybatisPlusConfig(多租户+乐观锁)  RedisConfig  SwaggerConfig  CorsConfig
+│   ├── config/   WechatProperties  CosProperties  (application.yml 多环境)
+│   ├── modules/
+│   │   ├── auth/      AuthController/Service/Mapper     # 微信登录换 openid/member、admin 登录(JWT)
+│   │   ├── menu/      MenuController/Service/Mapper     # 分类/菜品/规格/库存/上下架
+│   │   ├── order/     OrderController/Service/Mapper    # 订单/支付/状态机(@Version)
+│   │   ├── member/    MemberController/Service
+│   │   ├── reserve/   ReserveController/Service         # 桌台/预约/包间
+│   │   ├── marketing/ MarketingController/Service        # 优惠券/活动
+│   │   ├── printer/   PrinterService                    # 云打印/出单(type:1云2蓝牙3本地)
+│   │   ├── kitchen/   KitchenController/Service          # 后厨 KDS（/api/kitchen，WebSocket 实时）
+│   │   └── system/    Shop/Staff/Role/OperationLog
+│   ├── entity/        # 26 张表实体（或按模块分）
+│   └── mapper/        # MyBatis-Plus Mapper
+├── src/main/resources/
+│   ├── application.yml  application-dev.yml  application-prod.yml
+│   └── mapper/*.xml     # 复杂报表 SQL（按需）
+└── src/test/java/...</div>
+<div class="note">MyBatis-Plus <b>多租户插件</b>在 <code>MybatisPlusConfig</code> 注册：拦截所有查询自动加 <code>WHERE shop_id = ?</code>（值取自 <code>ShopContext</code>），写操作由 Insert 填充。这样 Service 层无需手写 <code>shop_id</code> 条件，从框架层保证隔离。</div>
+
+<h2>5. 关键实现方案（Java 侧）</h2>
+
+<h3>5.1 统一返回 & 异常处理</h3>
+<pre>// R.java：统一结构
+R.ok(data)            → { code:0, data, msg:"ok" }
+R.fail(code, msg)     → { code, data:null, msg }
+// ResponseAdvice(ResponseBodyAdvice)：成功响应统一包裹为 {code:0,data,msg}
+// GlobalExceptionHandler(@RestControllerAdvice)：
+//   BizException → {code,msg}；未登录/无 shopId → 401</pre>
+
+<h3>5.2 鉴权（对齐 request.js）</h3>
+<ul>
+  <li><code>ShopInterceptor</code>：所有请求必带 <code>X-Shop-Id</code>，缺失/非法 → 401；写入 <code>ShopContext</code>。</li>
+  <li><code>OpenidInterceptor</code>：<code>/api/client</code> 需登录接口读 <code>X-Openid</code> 解析 member；缺失 → 401 触发小程序重新 <code>wx.login</code>。</li>
+  <li><code>JwtInterceptor</code>：<code>/api/admin</code> 校验后台 JWT（店长/员工账号密码登录签发）。</li>
+</ul>
+
+<h3>5.3 微信登录</h3>
+<pre>POST /api/client/auth/login  { code }
+  → RestTemplate 调 code2session(appid+secret+code)
+  → 查/建 member（openid + shop_id 唯一）
+  → 返回 openid / member 基础信息（小程序缓存 globalData）</pre>
+
+<h3>5.4 微信支付 v3（订单 → 后厨 &lt; 3s）</h3>
+<ul>
+  <li><code>POST /api/client/orders</code>：<code>@Transactional</code> 创建订单（加 Redis 锁扣库存/占桌台 → 写 order + 明细快照 → 推后厨分单）。</li>
+  <li>返回 <code>payParams</code>：<code>{timeStamp, nonceStr, package, signType, paySign}</code> 供 <code>wx.requestPayment</code>。</li>
+  <li><code>POST /api/client/pay/notify</code>：用<b>平台证书</b>验签 → 按 <code>out_trade_no</code> 幂等（已支付直接 SUCCESS）→ 置已支付、释放锁。</li>
+</ul>
+
+<h3>5.5 并发与一致性</h3>
+<ul>
+  <li><b>Redisson 分布式锁：</b><code>RLock lock = redissonClient.getLock("order:accept:"+orderId)</code>，接单/改桌台/扣库存加锁，防多服务员并发冲突。</li>
+  <li><b>乐观锁：</b>订单实体 <code>@Version private Long version</code>，MP 自动 <code>UPDATE ... WHERE id=? AND version=?</code>，失败重试，防重复接单/改状态。</li>
+  <li><b>支付幂等：</b><code>out_trade_no</code> 唯一 + 已支付校验，回调重复到达安全。</li>
+</ul>
+
+<h3>5.6 缓存策略</h3>
+<ul>
+  <li><b>菜单树</b>（category+dish+sku）缓存 Redis，后台改菜品主动失效——高读低频写，显著降主库压力。</li>
+  <li><b>桌台实时状态 / 购物车 / 排队号</b> 放 Redis（带过期）。</li>
+  <li><b>归档：</b><code>order / order_payment / operation_log</code> 按月归档，单店日单量不大可先不分。</li>
+</ul>
+
+<h3>5.7 部署与合规</h3>
+<ul>
+  <li>本地：<code>docker-compose</code> 起 mysql + redis，<code>mvn spring-boot:run</code> 监听 3000（与 request.js baseURL 一致）。</li>
+  <li>生产：打 fat-jar → Docker 镜像 → 腾讯云 轻量/CVM；MySQL、Redis 用 TencentDB 托管；<b>Nginx + HTTPS</b>（微信支付与合法域名均要求 HTTPS）。</li>
+  <li>小程序后台配置 <b>request 合法域名</b> 指向后端 HTTPS 地址；服务器域名需 <b>ICP 备案</b>。</li>
+</ul>
+
+<h2>6. 待确认 / 前置事项</h2>
+<table>
+  <tr><th>项</th><th>状态</th><th>备注</th></tr>
+  <tr><td>后端框架</td><td><span class="pill p0">Spring Boot（已确认）</span></td><td>如需快速 demo 可改 NestJS，已说明取舍</td></tr>
+  <tr><td>ORM</td><td><span class="pill p1">MyBatis-Plus</span></td><td>备选 JPA</td></tr>
+  <tr><td>主库</td><td><span class="pill p0">MySQL 8.0</span></td><td>文档已定</td></tr>
+  <tr><td>对象存储</td><td><span class="pill p1">腾讯云 COS</span></td><td>微信生态同源</td></tr>
+  <tr><td>构建工具</td><td colspan="2">默认 Maven（如团队用 Gradle 可切换）</td></tr>
+  <tr><td>商户/备案</td><td><span class="pill p2">前置</span></td><td>微信支付需<b>企业/个体户商户号</b>且类目匹配；生产需 <b>ICP 备案 + HTTPS</b></td></tr>
+</table>
+<div class="note"><b>下一步建议：</b>确认无误后，我可以直接在 <code>BackendManagement-serve/</code> 搭出 Spring Boot 骨架（pom.xml + 启动类 + common 统一返回/鉴权/多租户 + 一个 menu 模块示例 + docker-compose），让你本地 <code>mvn spring-boot:run</code> 即可联调小程序。</div>
+
+<footer>点餐小程序 · 后端技术选型与实现方案 v1（Spring Boot） · 配合数据库设计文档_v1 / PRD_v1 / 原型_v1</footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,32 @@
+<!-- pages/member/member.wxml -->
+<view class="member">
+  <view class="header">
+    <view class="avatar">{{member.nickname[0]}}</view>
+    <view class="who">
+      <view class="name">{{member.nickname}}</view>
+      <van-tag type="danger">{{member.levelName || '普通会员'}}</van-tag>
+    </view>
+  </view>
+
+  <view class="stats">
+    <view class="stat"><view class="num">{{member.points}}</view><view class="label">积分</view></view>
+    <view class="stat"><view class="num">¥{{member.balance/100}}</view><view class="label">储值</view></view>
+    <view class="stat" bindtap="goReserve"><view class="num">预订</view><view class="label">订座/包间</view></view>
+  </view>
+
+  <view class="section-title">我的优惠券</view>
+  <view class="coupon {{item.status===0 ? '' : 'used'}}" wx:for="{{coupons}}" wx:key="id">
+    <view class="coupon-left">
+      <text class="c-amount">{{item.value/100}}</text>
+      <text class="c-cond">满{{item.threshold/100}}可用</text>
+    </view>
+    <view class="coupon-right">
+      <view class="c-name">{{item.name}}</view>
+      <view class="c-date muted">{{item.validTo}} 到期 · {{item.statusText}}</view>
+    </view>
+  </view>
+  <van-empty wx:if="{{coupons.length===0}}" description="暂无优惠券" />
+
+  <van-cell title="我的订单" is-link bindtap="" />
+  <van-cell title="收货地址" is-link bindtap="" />
+</view>

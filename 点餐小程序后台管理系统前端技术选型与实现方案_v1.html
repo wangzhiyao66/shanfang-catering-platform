@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>点餐小程序 · 后台管理系统前端技术选型与实现方案 v1</title>
+<style>
+  :root{ --brand:#e8543f; --brand2:#ff7a59; --ink:#1f2329; --sub:#65676b; --line:#e8eaed; --bg:#f7f8fa; --ok:#1aad19; --warn:#e8543f; }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,"PingFang SC","Microsoft YaHei",Helvetica,Arial,sans-serif;color:var(--ink);background:var(--bg);line-height:1.7}
+  .wrap{max-width:980px;margin:0 auto;padding:32px 24px 64px}
+  header{border-bottom:3px solid var(--brand);padding-bottom:16px;margin-bottom:24px}
+  h1{font-size:26px;margin:0 0 6px}
+  .meta{color:var(--sub);font-size:13px}
+  h2{font-size:19px;margin:32px 0 12px;padding-left:10px;border-left:4px solid var(--brand)}
+  h3{font-size:15px;margin:20px 0 8px;color:var(--brand)}
+  p,li{font-size:14px;color:var(--ink)}
+  .lead{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px 20px;margin:16px 0}
+  .card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px 20px;margin:12px 0;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+  table{width:100%;border-collapse:collapse;background:#fff;border-radius:10px;overflow:hidden;font-size:13.5px;margin:10px 0}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+  th{background:#fafbfc;color:var(--sub);font-weight:600}
+  tr:nth-child(even) td{background:#fcfcfd}
+  code{background:#f2f3f5;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Consolas,monospace;font-size:12.5px;color:#c0341d}
+  .inl{background:#fff3f0;color:var(--brand);padding:1px 6px;border-radius:5px;font-family:monospace;font-size:12.5px}
+  .pill{display:inline-block;padding:2px 9px;border-radius:20px;font-size:12px;font-weight:600}
+  .p0{background:var(--brand);color:#fff}
+  .p1{background:#ffd9cf;color:#a8341c}
+  .p2{background:#e8eaed;color:#5a5d62}
+  .note{background:#fff8f5;border-left:4px solid var(--brand2);padding:10px 14px;border-radius:0 8px 8px 0;font-size:13px;color:#7a3a2c;margin:12px 0}
+  .ok{color:var(--ok);font-weight:600}
+  .warn{color:var(--warn);font-weight:600}
+  pre{background:#1f2329;color:#e6e6e6;padding:14px 16px;border-radius:10px;overflow:auto;font-size:12.5px;line-height:1.55;font-family:"SF Mono",Consolas,monospace}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:720px){.grid{grid-template-columns:1fr}}
+  footer{margin-top:40px;color:var(--sub);font-size:12px;text-align:center;border-top:1px solid var(--line);padding-top:16px}
+  .tree{background:#fbfbfc;border:1px dashed var(--line);border-radius:10px;padding:14px 18px;font-family:monospace;font-size:12.5px;line-height:1.6;white-space:pre;color:#333}
+  .rec{background:#eafaf0;border:1px solid #b7e6c4;border-radius:10px;padding:12px 16px;margin:12px 0;font-size:13.5px}
+  .rec b{color:#1a7a3c}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>点餐小程序 · 后台管理系统前端技术选型与实现方案 <span style="color:var(--brand)">v1</span></h1>
+  <div class="meta">中餐单店 · 商家 PC 后台（BackendManagement-web）· 与《后端技术选型 v1》《PRD_v1》《数据库设计 v1》契约对齐 · 2026-08-15</div>
+</header>
+
+<div class="lead">
+  <b>结论（推荐栈）：</b> <span class="ok">Vue 3 + Vite + TypeScript</span> 作为前端框架，
+  UI 组件库优先 <span class="inl">Element Plus</span>（中餐后台表单/表格/权限场景最成熟，与小程序移动端 Vant 视觉自然区分），
+  状态 <span class="inl">Pinia</span>、路由 <span class="inl">Vue Router 4</span>（带 RBAC 守卫）、HTTP <span class="inl">Axios</span>（拦截器注入 JWT + <code>X-Shop-Id</code>）、图表 <span class="inl">ECharts</span>（数据报表）、实时 <span class="inl">WebSocket</span>（订单/KDS 推送）。
+  与后端 <code>/api/admin</code> 的 JWT 鉴权、<code>{code,data,msg}</code> 返回、<code>401</code> 未登录契约天然对齐。
+</div>
+
+<h2>1. 选型的硬约束（来自已定文档）</h2>
+<div class="card">
+  <ul>
+    <li><b>后端契约：</b>Java 17 + Spring Boot 3.x，监听 <b>3000</b>；<code>/api/admin/*</code> 用 <b>JWT</b> 鉴权（店长/员工账号密码登录签发），<code>/api/client/*</code> 用 <code>X-Openid/X-Shop-Id</code>。</li>
+    <li><b>返回格式：</b>统一 <code>{ code:0, data, msg }</code>；<code>401</code> 未登录 / 无 shopId → 触发重新登录。前端 Axios 需按此映射为 Promise resolve/reject（对齐小程序 <code>request.js</code>）。</li>
+    <li><b>租户隔离：</b>请求头 <code>X-Shop-Id</code>；后台若支持多店切换，需提供门店切换器并把当前 shopId 注入每个请求。</li>
+    <li><b>实时：</b>后厨 KDS / 新订单推送走 <b>WebSocket</b>（后端 <code>/api/kitchen</code>）。后台需 WS 客户端订阅订单流。具体 WS 协议（原生 WS / STOMP / Socket.IO）待与后端确认。</li>
+    <li><b>图片：</b>菜品/门店图走 <b>腾讯云 COS</b>，后台上传建议用「后端签发直传 URL + 前端直传」，再回传 URL。</li>
+    <li><b>角色：</b>超级管理员(老板)/店长/服务员/后厨 —— 标准 <b>RBAC</b>，权限来自 JWT 中的角色/菜单。</li>
+  </ul>
+</div>
+
+<h2>2. 推荐技术栈</h2>
+<table>
+  <tr><th>层</th><th>选型（推荐）</th><th>说明 / 备选</th></tr>
+  <tr><td>构建</td><td><b>Vite 5+</b></td><td>极速冷启动/热更新；比 Webpack 更适合后台开发。备选 Vue CLI（已停更）</td></tr>
+  <tr><td>框架</td><td><b>Vue 3</b>（<code>&lt;script setup&gt;</code> + Composition API）</td><td>与后端解耦靠 REST，无语言绑定；Vue 生态对中文后台最友好</td></tr>
+  <tr><td>语言</td><td><b>TypeScript</b>（推荐）</td><td>表单/表格/接口多，类型能显著降低 BUG；备选 JS（起步更快，但后期维护成本高）</td></tr>
+  <tr><td>UI 组件库</td><td><b>Element Plus</b>（推荐）</td><td>后台表单/表格/弹窗/上传最全，社区最大，模板最多。备选 <b>TDesign Vue Next</b>（腾讯系，视觉与 COS/微信生态更统一，但生态小于 Element Plus）</td></tr>
+  <tr><td>状态</td><td><b>Pinia</b></td><td>Vue 3 官方推荐；存 user(角色/权限)、app(主题/折叠)、shop(当前门店)</td></tr>
+  <tr><td>路由</td><td><b>Vue Router 4</b></td><td>路由级权限守卫 + 动态路由注册（按角色过滤菜单）</td></tr>
+  <tr><td>HTTP</td><td><b>Axios</b></td><td>拦截器统一注入 <code>Authorization: Bearer</code> + <code>X-Shop-Id</code>，统一 <code>{code,data,msg}</code> 解析与 401 处理</td></tr>
+  <tr><td>图表</td><td><b>ECharts</b>（vue-echarts）</td><td>数据报表 B-07：营业额/订单量/热销榜/翻台率/客单价/复购</td></tr>
+  <tr><td>实时</td><td><b>原生 WebSocket</b> 封装 / Socket.IO 客户端</td><td>订单推送与 KDS 厨显；具体协议待后端确认</td></tr>
+  <tr><td>表单增强</td><td>el-form + 自研<b>规格编辑器</b></td><td>菜品规格组（份量/辣度/忌口）、套餐组合等动态表单</td></tr>
+  <tr><td>工具</td><td>dayjs / lodash-es / @vueuse/core</td><td>日期、工具函数、组合式 hooks</td></tr>
+  <tr><td>接口源</td><td>Knife4j / SpringDoc OpenAPI</td><td>后端已规划，前端据此生成/核对 api 层，联调单一真相源</td></tr>
+  <tr><td>部署</td><td>build → <b>Nginx 静态托管</b> + 反代 /api</td><td>开发期 Vite proxy 到 <code>:3000</code> 解决 CORS；生产同域或子域 <code>admin.xxx.com</code>，HTTPS 必备</td></tr>
+</table>
+
+<div class="rec">
+  <b>为什么推荐 Element Plus 而非 TDesign：</b>后台是「重表单 + 重表格 + RBAC + 报表」场景，Element Plus 的中文后台模板/组件最全（el-table 虚拟滚动、el-form 校验、el-upload、el-tree 等），出问题好查、招人容易；TDesign 更偏腾讯系设计统一，若未来你想让小程序也换 TDesign 小程序版、追求全栈视觉统一，可再迁。两者都满足「与小程序 Vant 视觉区分」的要求。
+</div>
+
+<h2>3. 与后端契约对齐的关键实现</h2>
+
+<h3>3.1 请求层（对照小程序 request.js）</h3>
+<pre>// src/utils/request.ts
+const service = axios.create({ baseURL: import.meta.env.VITE_API, timeout: 15000 });
+
+// 请求拦截：注入后台 JWT 与租户 shopId
+service.interceptors.request.use(cfg => {
+  cfg.headers.Authorization = `Bearer ${useUserStore().token}`;
+  cfg.headers['X-Shop-Id']   = useShopStore().currentShopId;
+  return cfg;
+});
+
+// 响应拦截：对齐 { code:0, data, msg }
+service.interceptors.response.use(
+  res => {
+    const { code, data, msg } = res.data;
+    if (code === 0) return data;          // resolve(data)
+    if (res.status === 401) { /* 跳转登录 */ }
+    return Promise.reject(new Error(msg));
+  },
+  err => { /* 401 -> 登录页；网络错误提示 */ return Promise.reject(err); }
+);</pre>
+<div class="note">开发期在 <code>vite.config.ts</code> 配 <code>server.proxy['/api'] → http://localhost:3000</code>，前端只访问同源 <code>/api</code>，免去 CORS 配置；生产由 Nginx 反代。</div>
+
+<h3>3.2 RBAC 权限模型</h3>
+<ul>
+  <li><b>登录：</b><code>POST /api/admin/auth/login</code> → 返回 JWT（含角色/菜单）；前端存 Pinia + localStorage。</li>
+  <li><b>路由守卫：</b>全局 <code>beforeEach</code> 校验 token；未登录跳登录页；已登录按角色<b>动态注册路由</b>（后端下发的菜单映射为路由表）。</li>
+  <li><b>按钮级权限：</b>自定义指令 <code>v-permission="'order:refund'"</code>，无权限隐藏/禁用按钮（退菜/改账等敏感操作）。</li>
+  <li><b>操作日志：</b>敏感动作（删单/退菜/改账）调用后端 <code>operation_log</code> 落库，前端仅触发。</li>
+</ul>
+
+<h3>3.3 图片上传（COS 直传）</h3>
+<pre>// 1) 前端请求后端签发直传 URL： POST /api/admin/upload/cos-sign
+// 2) 用该 URL + 表单(含 signature/key) 直传腾讯云 COS
+// 3) 回传文件访问 URL 给菜品/门店表单字段</pre>
+<div class="note">密钥只存后端，前端拿「临时直传凭证」即可，符合安全约定（密钥不下发前端）。</div>
+
+<h3>3.4 实时推送（订单 / KDS）</h3>
+<ul>
+  <li>建立 WS 连接订阅本店订单流；新订单 → 订单管理页高亮 + 声音/桌面提醒（B-03）。</li>
+  <li>后厨协同（B-04）可与 KDS 同屏或独立路由：接单→分档口→出餐→状态回传顾客端，断网由后端兜底缓存。</li>
+  <li>WS 鉴权用同一 JWT；重连/心跳需前端封装。协议细节（原生 WS / STOMP / Socket.IO）<b>待与后端确认</b>。</li>
+</ul>
+
+<h2>4. 推荐目录结构（BackendManagement-web）</h2>
+<div class="tree">BackendManagement-web/
+├── index.html
+├── vite.config.ts                # dev proxy → :3000
+├── package.json  tsconfig.json  .env(.dev/.prod)
+├── src/
+│   ├── api/        # 按后端模块分：menu / order / table / member / marketing / report / system
+│   ├── assets/     # 图标、品牌图
+│   ├── components/ # 通用：SpecEditor(规格组) / TableTopo(桌台拓扑) / CosUpload / DictTag
+│   ├── layouts/    # 后台框架布局（侧边栏 + 顶栏 + 内容区）
+│   ├── router/     # 路由表 + 权限守卫 + 动态路由
+│   ├── store/      # Pinia：user / app / shop
+│   ├── utils/      # request.ts(Axios) / ws.ts / auth.ts / permission.ts
+│   ├── views/      # 页面（对齐 PRD B-01~B-09）
+│   │   ├── login/
+│   │   ├── menu/       # B-01 菜品管理
+│   │   ├── table/      # B-02 桌台管理
+│   │   ├── order/      # B-03 订单管理
+│   │   ├── kitchen/    # B-04 后厨协同 / KDS
+│   │   ├── member/     # B-05 会员管理
+│   │   ├── marketing/  # B-06 营销工具
+│   │   ├── report/     # B-07 数据报表(ECharts)
+│   │   ├── system/     # B-08 员工权限 + B-09 基础设置
+│   ├── styles/     # 主题/变量
+│   ├── App.vue  main.ts</div>
+<div class="note">目录按后端模块（menu/order/table/system…）一一对应，前端 api 与后端 Controller 同名，降低联调心智负担。</div>
+
+<h2>5. 落地路线图（对齐 PRD 里程碑）</h2>
+<table>
+  <tr><th>阶段</th><th>目标</th><th>后台范围</th></tr>
+  <tr><td><b>P0 · 脚手架</b></td><td>可跑通联调</td><td>Vite+Vue3+TS+Element Plus+Pinia+Router+Axios；布局/登录/RBAC 守卫/request 封装；dev proxy 联后端</td></tr>
+  <tr><td><b>P0 · MVP</b></td><td>堂食闭环</td><td>B-01 菜品（CRUD+规格组+库存+上下架+图片）、B-02 桌台、B-03 订单（实时+接单/出餐/退改+打印）、B-09 基础设置</td></tr>
+  <tr><td><b>P1 · 进阶</b></td><td>复购与客单价</td><td>B-05 会员、B-06 营销、B-07 数据报表(ECharts)、B-08 员工权限(RBAC 可视化)、B-04 后厨协同/KDS(WebSocket)</td></tr>
+  <tr><td><b>P2 · 远期</b></td><td>精细化/扩张</td><td>多门店切换、外卖对接、供应链进销存等</td></tr>
+</table>
+
+<h2>6. 待确认 / 前置事项</h2>
+<table>
+  <tr><th>项</th><th>建议</th><th>备注</th></tr>
+  <tr><td>UI 组件库</td><td><span class="pill p0">Element Plus（推荐）</span></td><td>备选 TDesign Vue Next（视觉统一腾讯系）</td></tr>
+  <tr><td>开发语言</td><td><span class="pill p0">TypeScript（推荐）</span></td><td>备选 JavaScript（起步更快）</td></tr>
+  <tr><td>脚手架起点</td><td><span class="pill p1">自建轻量（推荐）</span></td><td>备选 vben-admin 成熟模板（含 RBAC/WS/ECharts 全套）</td></tr>
+  <tr><td>WS 协议</td><td><span class="pill p2">待确认</span></td><td>原生 WS / STOMP / Socket.IO 需后端定</td></tr>
+  <tr><td>后厨 KDS 形态</td><td><span class="pill p2">建议并入后台路由</span></td><td>或独立大屏应用；触屏/断网缓存需明确</td></tr>
+  <tr><td>多店</td><td><span class="pill p2">预留</span></td><td>门店切换器 + X-Shop-Id；单店可先不做</td></tr>
+</table>
+
+<div class="note"><b>下一步建议：</b>确认上述选型后，我可以在 <code>BackendManagement-web/</code> 直接搭出 Vite 脚手架（含登录 + RBAC 守卫 + Axios 封装 + 侧边栏布局 + 一个菜品管理示例页），让你 <code>npm run dev</code> 即可联调后端 <code>:3000</code> 的 <code>/api/admin</code>。</div>
+
+<footer>点餐小程序 · 后台管理系统前端技术选型与实现方案 v1 · 配合《后端技术选型 v1》《PRD_v1》《数据库设计 v1》</footer>
+</div>
+</body>
+</html>
