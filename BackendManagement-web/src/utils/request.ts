@@ -2,18 +2,12 @@ import axios, { type AxiosInstance, type AxiosResponse, type InternalAxiosReques
 import { ElMessage } from 'element-plus'
 import { getToken, removeToken } from './auth'
 import { useShopStore } from '@/store/shop'
-import { mockAdapter } from '@/mock'
 
 // 统一请求封装：注入后台 JWT + 租户 X-Shop-Id，对齐后端 { code, data, msg } / 401 契约
 const service: AxiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API || '/api',
   timeout: 15000
 })
-
-// 后端未就绪时走 Mock 数据层（仅开发环境）：后端就绪后将 .env 的 VITE_USE_MOCK 置为 false 即可
-if (import.meta.env.VITE_USE_MOCK === 'true') {
-  service.defaults.adapter = mockAdapter
-}
 
 service.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   const headers = config.headers as Record<string, unknown>

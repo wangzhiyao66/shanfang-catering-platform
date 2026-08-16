@@ -2,21 +2,32 @@
 // 统一请求封装：对接 BackendManagement-serve 的 /api/client/* 接口。
 // 约定：所有请求带 X-Shop-Id（租户隔离）；登录态接口额外带 X-Openid。
 // 后端返回统一结构 { code:0, data, msg }；401 自动登录后重试一次。
-const app = getApp();
+//
+// ⚠️ 注意：必须在函数内部惰性调用 getApp()，不能在模块顶层 const app = getApp()。
+// 原因：app.js 顶部 require('./utils/auth') -> auth.js require('./request')，
+// 此时 App() 尚未注册，getApp() 返回 undefined，会导致请求永远不带 X-Shop-Id/X-Openid → 全部 401。
+
+function appInstance() {
+  // 每次调用时获取最新的 app 实例（App 注册后即为有效实例）
+  return typeof getApp === 'function' ? getApp() : undefined;
+}
 
 function shopHeader() {
+  const app = appInstance();
   const h = { 'content-type': 'application/json' };
   if (app && app.globalData.shopId != null) h['X-Shop-Id'] = String(app.globalData.shopId);
   return h;
 }
 
 function authHeader() {
+  const app = appInstance();
   const h = shopHeader();
   if (app && app.globalData.openid) h['X-Openid'] = app.globalData.openid;
   return h;
 }
 
 function baseURL() {
+  const app = appInstance();
   return (app && app.globalData.baseURL) || 'http://localhost:3000/api/client';
 }
 
@@ -36,15 +47,16 @@ function rawRequest({ url, method = 'GET', data = {}, header }) {
 
 // 静默登录：wx.login 拿 code -> 后端 /auth/login 换 openid，写入 globalData + 本地缓存
 async function ensureLogin() {
+  const app = appInstance();
   if (app && app.globalData.openid) return;
   const cached = wx.getStorageSync('openid');
-  if (cached) { app.globalData.openid = cached; return; }
+  if (cached) { if (app) app.globalData.openid = cached; return; }
   const code = await new Promise((res, rej) =>
     wx.login({ success: (r) => (r.code ? res(r.code) : rej(r)), fail: rej }));
   const resp = await rawRequest({ url: '/auth/login', method: 'POST', data: { code }, header: shopHeader() });
   const openid = resp.data && resp.data.data && resp.data.data.openid;
   if (openid) {
-    app.globalData.openid = openid;
+    if (app) app.globalData.openid = openid;
     wx.setStorageSync('openid', openid);
   }
 }
@@ -61,7 +73,8 @@ function request({ url, method = 'GET', data = {}, auth = true }) {
       }
       if (resp.statusCode === 401 && auth) {
         // 登录态缺失/失效：清掉本地 openid，重新登录并重试一次
-        app.globalData.openid = null;
+        const app = appInstance();
+        if (app) app.globalData.openid = null;
         wx.removeStorageSync('openid');
         await ensureLogin();
         const r2 = await rawRequest({ url, method, data, header: authHeader() });

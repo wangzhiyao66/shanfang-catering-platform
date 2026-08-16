@@ -9,6 +9,7 @@ import com.ordering.modules.kitchen.service.KitchenService;
 import com.ordering.modules.member.entity.Coupon;
 import com.ordering.modules.member.entity.Member;
 import com.ordering.modules.member.mapper.CouponMapper;
+import com.ordering.modules.member.mapper.MemberMapper;
 import com.ordering.modules.member.service.MemberService;
 import com.ordering.modules.menu.entity.Dish;
 import com.ordering.modules.menu.entity.DishSpec;
@@ -18,10 +19,15 @@ import com.ordering.modules.order.dto.OrderCreateDTO;
 import com.ordering.modules.order.dto.OrderItemDTO;
 import com.ordering.modules.order.entity.Order;
 import com.ordering.modules.order.entity.OrderItem;
+import com.ordering.modules.order.entity.OrderPayment;
 import com.ordering.modules.order.entity.OrderUrge;
 import com.ordering.modules.order.mapper.OrderItemMapper;
 import com.ordering.modules.order.mapper.OrderMapper;
+import com.ordering.modules.order.mapper.OrderPaymentMapper;
 import com.ordering.modules.order.mapper.OrderUrgeMapper;
+import com.ordering.modules.order.vo.OrderAdminDetailVO;
+import com.ordering.modules.reservation.entity.DiningTable;
+import com.ordering.modules.reservation.mapper.DiningTableMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -46,11 +52,15 @@ public class OrderServiceImpl implements OrderService {
     private final MemberService memberService;
     private final KitchenService kitchenService;
     private final KitchenPushService kitchenPushService;
+    private final DiningTableMapper diningTableMapper;
+    private final MemberMapper memberMapper;
+    private final OrderPaymentMapper orderPaymentMapper;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     public OrderServiceImpl(OrderMapper orderMapper, OrderItemMapper orderItemMapper, OrderUrgeMapper orderUrgeMapper,
                             DishMapper dishMapper, DishSpecMapper dishSpecMapper, CouponMapper couponMapper,
-                            MemberService memberService, KitchenService kitchenService, KitchenPushService kitchenPushService) {
+                            MemberService memberService, KitchenService kitchenService, KitchenPushService kitchenPushService,
+                            DiningTableMapper diningTableMapper, MemberMapper memberMapper, OrderPaymentMapper orderPaymentMapper) {
         this.orderMapper = orderMapper;
         this.orderItemMapper = orderItemMapper;
         this.orderUrgeMapper = orderUrgeMapper;
@@ -60,6 +70,9 @@ public class OrderServiceImpl implements OrderService {
         this.memberService = memberService;
         this.kitchenService = kitchenService;
         this.kitchenPushService = kitchenPushService;
+        this.diningTableMapper = diningTableMapper;
+        this.memberMapper = memberMapper;
+        this.orderPaymentMapper = orderPaymentMapper;
     }
 
     @Override
@@ -252,6 +265,40 @@ public class OrderServiceImpl implements OrderService {
         u.setMemberId(memberId);
         u.setCreatedAt(LocalDateTime.now());
         orderUrgeMapper.insert(u);
+    }
+
+    @Override
+    public OrderAdminDetailVO adminGetOrder(Long shopId, Long id) {
+        Order o = requireOrder(shopId, id);
+        OrderAdminDetailVO vo = new OrderAdminDetailVO();
+        vo.setId(o.getId());
+        vo.setOrderNo(o.getOrderNo());
+        vo.setType(o.getType());
+        vo.setMemberId(o.getMemberId());
+        vo.setTableId(o.getTableId());
+        vo.setStatus(o.getStatus());
+        vo.setPeopleCount(o.getPeopleCount());
+        vo.setTotalAmount(o.getTotalAmount());
+        vo.setDiscountAmount(o.getDiscountAmount());
+        vo.setPayAmount(o.getPayAmount());
+        vo.setCouponId(o.getCouponId());
+        vo.setPaidAt(o.getPaidAt());
+        vo.setCreatedAt(o.getCreatedAt());
+        vo.setItems(orderItemMapper.selectList(
+                new LambdaQueryWrapper<OrderItem>().eq(OrderItem::getOrderId, o.getId())));
+        vo.setPayment(orderPaymentMapper.selectOne(new LambdaQueryWrapper<OrderPayment>()
+                .eq(OrderPayment::getOrderId, o.getId()).orderByDesc(OrderPayment::getId).last("LIMIT 1")));
+        if (o.getMemberId() != null) {
+            Member m = memberMapper.selectOne(new LambdaQueryWrapper<Member>()
+                    .eq(Member::getId, o.getMemberId()).eq(Member::getShopId, shopId));
+            vo.setMemberName(m == null ? "未知会员" : (m.getNickname() == null ? "" : m.getNickname()));
+        }
+        if (o.getTableId() != null) {
+            DiningTable t = diningTableMapper.selectOne(new LambdaQueryWrapper<DiningTable>()
+                    .eq(DiningTable::getId, o.getTableId()).eq(DiningTable::getShopId, shopId));
+            vo.setTableNo(t == null ? "" : t.getTableNo());
+        }
+        return vo;
     }
 
     // ===== 内部辅助 =====

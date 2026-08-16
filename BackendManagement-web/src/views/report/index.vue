@@ -1,13 +1,22 @@
 <template>
   <div>
+    <el-row :gutter="16" class="mb">
+      <el-col :span="6" v-for="s in summaryCards" :key="s.label">
+        <el-card shadow="hover" class="stat-card">
+          <div class="stat-title">{{ s.label }}</div>
+          <div class="stat-value" :style="{ color: s.color }">{{ s.value }}</div>
+        </el-card>
+      </el-col>
+    </el-row>
+
     <el-row :gutter="16">
       <el-col :span="12">
-        <el-card shadow="never" header="近 30 日营业额趋势">
+        <el-card shadow="never" header="营收 / 订单数趋势">
           <BaseChart :option="revenueOption" height="320px" />
         </el-card>
       </el-col>
       <el-col :span="12">
-        <el-card shadow="never" header="近 30 日客单价趋势">
+        <el-card shadow="never" header="客单价趋势">
           <BaseChart :option="avgTicketOption" height="320px" />
         </el-card>
       </el-col>
@@ -30,54 +39,78 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import BaseChart from '@/components/BaseChart.vue'
-import { getRevenueTrend, getDishRank, getOrderTypeShare, getAvgTicket, type TrendPoint, type RankItem, type TypeDist } from '@/api/report'
-import { yuanShort } from '@/utils/format'
+import { getReport, type ReportVO, type TypeCount } from '@/api/report'
+import { yuan, yuanShort } from '@/utils/format'
 
-const revenue = ref<TrendPoint[]>([])
-const avgTicket = ref<TrendPoint[]>([])
-const dishRank = ref<RankItem[]>([])
-const typeShare = ref<TypeDist[]>([])
+const report = ref<ReportVO>({ revenueTrend: [], typeDist: [], topDishes: [], summary: { totalRevenue: 0, totalOrders: 0, avgOrderValue: 0, refundAmount: 0 } })
+
+const summaryCards = computed(() => [
+  { label: '总营收', value: '¥' + yuan(report.value.summary.totalRevenue), color: '#ff7a59' },
+  { label: '总订单数', value: report.value.summary.totalOrders, color: '#409eff' },
+  { label: '客单价', value: '¥' + yuan(report.value.summary.avgOrderValue), color: '#67c23a' },
+  { label: '退款金额', value: '¥' + yuan(report.value.summary.refundAmount), color: '#e6a23c' }
+])
 
 const revenueOption = computed(() => ({
   tooltip: { trigger: 'axis' },
-  grid: { left: 60, right: 20, top: 20, bottom: 40 },
-  xAxis: { type: 'category', data: revenue.value.map(d => d.date), axisLabel: { rotate: 45 } },
-  yAxis: { type: 'value', axisLabel: { formatter: (v: number) => yuanShort(v) } },
-  series: [{ type: 'line', smooth: true, data: revenue.value.map(d => d.amount), areaStyle: {}, itemStyle: { color: '#ff7a59' } }]
+  legend: { data: ['营收', '订单数'], bottom: 0 },
+  grid: { left: 60, right: 50, top: 20, bottom: 40 },
+  xAxis: { type: 'category', data: report.value.revenueTrend.map(d => d.date), axisLabel: { rotate: 45 } },
+  yAxis: [
+    { type: 'value', name: '营收', axisLabel: { formatter: (v: number) => yuanShort(v) } },
+    { type: 'value', name: '订单数' }
+  ],
+  series: [
+    { name: '营收', type: 'line', smooth: true, areaStyle: {}, data: report.value.revenueTrend.map(d => d.revenue), itemStyle: { color: '#ff7a59' } },
+    { name: '订单数', type: 'bar', yAxisIndex: 1, data: report.value.revenueTrend.map(d => d.orderCount), itemStyle: { color: '#409eff' } }
+  ]
 }))
 
 const avgTicketOption = computed(() => ({
   tooltip: { trigger: 'axis', formatter: (p: any) => `${p[0].axisValue}<br/>客单价：¥${(p[0].data / 100).toFixed(2)}` },
   grid: { left: 60, right: 20, top: 20, bottom: 40 },
-  xAxis: { type: 'category', data: avgTicket.value.map(d => d.date), axisLabel: { rotate: 45 } },
+  xAxis: { type: 'category', data: report.value.revenueTrend.map(d => d.date), axisLabel: { rotate: 45 } },
   yAxis: { type: 'value', axisLabel: { formatter: (v: number) => yuanShort(v) } },
-  series: [{ type: 'line', smooth: true, data: avgTicket.value.map(d => d.value), itemStyle: { color: '#409eff' } }]
+  series: [{ type: 'line', smooth: true, data: report.value.revenueTrend.map(d => d.avgAmount), itemStyle: { color: '#409eff' } }]
 }))
 
 const dishRankOption = computed(() => ({
   tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
-  grid: { left: 90, right: 30, top: 10, bottom: 20 },
+  grid: { left: 110, right: 30, top: 10, bottom: 20 },
   xAxis: { type: 'value' },
-  yAxis: { type: 'category', data: dishRank.value.map(d => d.name).reverse() },
-  series: [{ type: 'bar', data: dishRank.value.map(d => d.count).reverse(), itemStyle: { color: '#67c23a', borderRadius: [0, 4, 4, 0] }, barWidth: 14 }]
+  yAxis: { type: 'category', data: report.value.topDishes.map(d => d.dishName).reverse() },
+  series: [{ type: 'bar', data: report.value.topDishes.map(d => d.qty).reverse(), itemStyle: { color: '#67c23a', borderRadius: [0, 4, 4, 0] }, barWidth: 14 }]
 }))
 
+function typeLabel(t: number | null): string {
+  if (t === 1) return '堂食'
+  if (t === 2) return '外卖'
+  if (t === 3) return '自提'
+  return '其他'
+}
 const typeShareOption = computed(() => ({
   tooltip: { trigger: 'item', formatter: '{b}: {c} 单 ({d}%)' },
   legend: { bottom: 0 },
   series: [{
     type: 'pie', radius: ['45%', '70%'], center: ['50%', '45%'],
-    data: typeShare.value.map(t => ({ name: t.label, value: t.value, itemStyle: { color: t.type === 1 ? '#ff7a59' : t.type === 2 ? '#409eff' : '#67c23a' } })),
+    data: report.value.typeDist.map((t: TypeCount) => ({
+      name: typeLabel(t.type),
+      value: t.count,
+      itemStyle: { color: t.type === 1 ? '#ff7a59' : t.type === 2 ? '#409eff' : t.type === 3 ? '#67c23a' : '#c0c4cc' }
+    })),
     label: { formatter: '{b}\n{d}%' }
   }]
 }))
 
 onMounted(async () => {
-  const [r, a, d, t] = await Promise.all([getRevenueTrend(), getAvgTicket(), getDishRank(), getOrderTypeShare()])
-  revenue.value = r; avgTicket.value = a; dishRank.value = d; typeShare.value = t
+  report.value = await getReport(30)
 })
 </script>
 
 <style scoped>
+.stat-card { border-radius: 8px; }
+.stat-title { color: #86909c; font-size: 13px; }
+.stat-value { font-size: 24px; font-weight: 700; margin-top: 6px; }
 .mt { margin-top: 16px; }
+.mb { margin-bottom: 16px; }
 </style>

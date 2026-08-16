@@ -228,3 +228,39 @@ CREATE TABLE IF NOT EXISTS kitchen_ticket (
   KEY idx_station (station_id, status),
   KEY idx_order (order_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ===== 员工 / 角色（RBAC） =====
+CREATE TABLE IF NOT EXISTS `role` (
+  id          BIGINT       NOT NULL AUTO_INCREMENT,
+  shop_id     BIGINT       NOT NULL,
+  name        VARCHAR(32)  NOT NULL DEFAULT '',
+  permissions VARCHAR(1024) DEFAULT '' COMMENT '逗号分隔的权限码；* 表示全部',
+  status      TINYINT      NOT NULL DEFAULT 1,
+  create_time DATETIME     DEFAULT NULL,
+  PRIMARY KEY (id),
+  KEY idx_shop (shop_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS employee (
+  id          BIGINT       NOT NULL AUTO_INCREMENT,
+  shop_id     BIGINT       NOT NULL,
+  name        VARCHAR(32)  NOT NULL DEFAULT '',
+  phone       VARCHAR(20)  DEFAULT '',
+  account     VARCHAR(32)  DEFAULT '',
+  password    VARCHAR(64)  DEFAULT '',
+  role_id     BIGINT       DEFAULT NULL,
+  status      TINYINT      NOT NULL DEFAULT 1 COMMENT '1在职0停用',
+  create_time DATETIME     DEFAULT NULL,
+  PRIMARY KEY (id),
+  KEY idx_shop (shop_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ===== 门店设置（key-value 扩展，避免改动 shop 主表结构） =====
+CREATE TABLE IF NOT EXISTS shop_setting (
+  id           BIGINT       NOT NULL AUTO_INCREMENT,
+  shop_id      BIGINT       NOT NULL,
+  setting_key  VARCHAR(64)  NOT NULL,
+  setting_value VARCHAR(512) DEFAULT '',
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_shop_key (shop_id, setting_key)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

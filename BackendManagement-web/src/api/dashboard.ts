@@ -1,31 +1,21 @@
 import request from '@/utils/request'
 
-export interface DashStats {
-  todayOrders: number
-  todayRevenue: number // 分
-  pendingOrders: number
-  todayMembers: number
-  weekRevenue: number // 分
-  monthRevenue: number // 分
-  avgTicket: number // 分
-}
-export interface TrendPoint { date: string; amount: number; count: number }
-export interface TypeDist { type: number; label: string; value: number }
-export interface TopDish { name: string; count: number; amount: number }
+export interface DayPoint { date: string; amount: number; orderCount: number }
+export interface TypeCount { type: number | null; count: number }
+export interface DishRank { dishName: string; qty: number; amount: number }
 
-/** 工作台核心指标 */
-export function getStats(): Promise<DashStats> {
-  return request({ url: '/admin/dashboard/stats', method: 'GET' }) as Promise<DashStats>
+/** 工作台视图对象：核心指标 + 近 7 日营收趋势 + 订单类型分布 + 热销 TOP。金额单位为「分」。 */
+export interface DashboardVO {
+  todayRevenue: number // 今日营收（分）
+  todayOrderCount: number // 今日订单数（不含已取消）
+  pendingOrders: number // 进行中订单（状态 0~3）
+  totalMembers: number // 会员总数
+  weekRevenue: DayPoint[] // 近 7 日
+  orderTypeDist: TypeCount[] // 订单类型分布
+  topDishes: DishRank[] // 热销 TOP5
 }
-/** 近 7 日销售趋势 */
-export function getSalesTrend(): Promise<TrendPoint[]> {
-  return request({ url: '/admin/dashboard/sales-trend', method: 'GET' }) as Promise<TrendPoint[]>
-}
-/** 订单类型分布 */
-export function getOrderTypeDist(): Promise<TypeDist[]> {
-  return request({ url: '/admin/dashboard/order-type', method: 'GET' }) as Promise<TypeDist[]>
-}
-/** 热销菜品 TOP */
-export function getTopDishes(): Promise<TopDish[]> {
-  return request({ url: '/admin/dashboard/top-dishes', method: 'GET' }) as Promise<TopDish[]>
+
+/** 工作台核心指标（单接口聚合，对应后端 GET /api/admin/dashboard） */
+export function getDashboard(): Promise<DashboardVO> {
+  return request({ url: '/admin/dashboard', method: 'GET' }) as Promise<DashboardVO>
 }

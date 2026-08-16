@@ -3,7 +3,6 @@
 interface ImportMetaEnv {
   readonly VITE_API: string
   readonly VITE_APP_TITLE: string
-  readonly VITE_USE_MOCK: string
 }
 
 interface ImportMeta {

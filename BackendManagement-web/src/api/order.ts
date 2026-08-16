@@ -1,35 +1,52 @@
 import request from '@/utils/request'
 
-export interface OrderItem { name: string; price: number; qty: number; spec?: string }
+export interface OrderItem { dishName: string; qty: number; unitPrice: number; specsJson?: string; remark?: string }
+
+/** 后台订单详情（聚合主信息 + 菜品明细 + 支付单 + 会员名 + 桌台号），对应后端 OrderAdminDetailVO。金额单位为「分」。 */
+export interface OrderDetail {
+  id: number
+  orderNo: string
+  type: number // 1 堂食 2 外卖 3 自提
+  status: number
+  peopleCount?: number
+  totalAmount: number // 分
+  discountAmount?: number
+  payAmount?: number
+  memberName?: string
+  tableNo?: string
+  paidAt?: string
+  createdAt: string
+  items?: OrderItem[]
+}
 export interface Order {
   id: number
   orderNo: string
   type: number // 1 堂食 2 外卖 3 自提
-  status: number // 1 待支付 2 已支付待接单 3 制作中 4 待出餐 5 已完成 6 已取消 7 退款中 8 已退款
+  status: number // 0待支付 1已支付/待接单 2制作中 3已上菜/待取餐 4已完成 5退款中 6已退款 7退单 9已取消
+  tableId?: number
   tableNo?: string
-  customerName: string
-  phone: string
+  customerName?: string
+  phone?: string
   totalAmount: number // 分
-  paidAmount: number
-  items: OrderItem[]
+  discountAmount?: number
+  payAmount?: number
+  items?: OrderItem[]
   createdAt: string
-  remark: string
+  remark?: string
 }
 export interface OrderQuery {
-  page?: number
-  size?: number
   type?: number
   status?: number
   keyword?: string
 }
 
-/** 订单列表（分页 + 筛选）。注意：真实后端 /admin/orders 返回裸数组（非分页），接入时需适配分页；当前由 mock 提供分页结构 */
-export function listOrders(params: OrderQuery): Promise<{ list: Order[]; total: number }> {
-  return request({ url: '/admin/orders', method: 'GET', params }) as Promise<{ list: Order[]; total: number }>
+/** 订单列表（真实后端返回裸数组；status 可作为服务端筛选参数，type/keyword 由页面端再筛） */
+export function listOrders(params?: OrderQuery): Promise<Order[]> {
+  return request({ url: '/admin/orders', method: 'GET', params }) as Promise<Order[]>
 }
-/** 订单详情 */
-export function getOrder(id: number): Promise<Order> {
-  return request({ url: `/admin/orders/${id}`, method: 'GET' }) as Promise<Order>
+/** 订单详情（真实后端聚合接口，含菜品明细/会员名/桌台号/支付单） */
+export function getOrder(id: number): Promise<OrderDetail> {
+  return request({ url: `/admin/order/${id}`, method: 'GET' }) as Promise<OrderDetail>
 }
 /** 接单：POST /admin/order/{id}/accept（已支付/待接单 → 制作中） */
 export function acceptOrder(id: number): Promise<{ success: boolean }> {
@@ -42,8 +59,4 @@ export function updateOrderStatus(id: number, status: number): Promise<{ success
 /** 取消订单：POST /admin/order/{id}/cancel */
 export function cancelOrder(id: number): Promise<{ success: boolean }> {
   return request({ url: `/admin/order/${id}/cancel`, method: 'POST' }) as Promise<{ success: boolean }>
-}
-/** 退款（mock 专用：真实后端暂无该端点，需后续补齐） */
-export function refundOrder(id: number): Promise<{ success: boolean }> {
-  return request({ url: `/admin/orders/${id}/refund`, method: 'PUT' }) as Promise<{ success: boolean }>
 }

@@ -35,5 +35,5 @@ Page({
     }
   },
 
-  goReserve() { wx.switchTab({ url: '/pages/reserve/reserve' }); }
+  goReserve() { wx.navigateTo({ url: '/pages/reserve/reserve' }); }
 });

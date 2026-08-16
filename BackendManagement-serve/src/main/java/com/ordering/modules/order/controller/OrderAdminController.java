@@ -4,6 +4,7 @@ import com.ordering.common.context.RequestContext;
 import com.ordering.common.result.R;
 import com.ordering.modules.order.entity.Order;
 import com.ordering.modules.order.service.OrderService;
+import com.ordering.modules.order.vo.OrderAdminDetailVO;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -46,5 +47,11 @@ public class OrderAdminController {
     public R<Void> cancel(@PathVariable Long id) {
         orderService.cancelOrder(RequestContext.getShopId(), id);
         return R.ok();
+    }
+
+    /** 后台订单详情：GET /api/admin/order/{id} */
+    @GetMapping("/admin/order/{id}")
+    public R<OrderAdminDetailVO> detail(@PathVariable Long id) {
+        return R.ok(orderService.adminGetOrder(RequestContext.getShopId(), id));
     }
 }

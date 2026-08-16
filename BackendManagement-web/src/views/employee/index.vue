@@ -6,9 +6,10 @@
           <el-table :data="employees" v-loading="loading" stripe border>
             <el-table-column prop="name" label="姓名" width="160" />
             <el-table-column label="角色" width="120">
-              <template #default="{ row }"><el-tag :type="roleType(row.role)" size="small">{{ row.role }}</el-tag></template>
+              <template #default="{ row }"><el-tag :type="roleType(row.roleName)" size="small">{{ row.roleName }}</el-tag></template>
             </el-table-column>
             <el-table-column prop="phone" label="手机号" width="140" />
+            <el-table-column prop="account" label="账号" width="140" />
             <el-table-column label="状态" width="90">
               <template #default="{ row }"><el-tag :type="row.status ? 'success' : 'info'" size="small">{{ row.status ? '在职' : '离职' }}</el-tag></template>
             </el-table-column>
@@ -26,11 +27,11 @@
             <el-table-column prop="name" label="角色" width="120" />
             <el-table-column label="权限点">
               <template #default="{ row }">
-                <template v-if="row.permissions.includes('*')">
+                <template v-if="permList(row.permissions).includes('*')">
                   <el-tag type="danger" size="small">全部权限</el-tag>
                 </template>
                 <template v-else>
-                  <el-tag v-for="p in row.permissions" :key="p" size="small" effect="plain" class="perm">{{ p }}</el-tag>
+                  <el-tag v-for="p in permList(row.permissions)" :key="p" size="small" effect="plain" class="perm">{{ p }}</el-tag>
                 </template>
               </template>
             </el-table-column>
@@ -46,7 +47,7 @@
       <template v-if="activeEmp">
         <el-descriptions :column="1" border>
           <el-descriptions-item label="姓名">{{ activeEmp.name }}</el-descriptions-item>
-          <el-descriptions-item label="角色">{{ activeEmp.role }}</el-descriptions-item>
+          <el-descriptions-item label="角色">{{ activeEmp.roleName }}</el-descriptions-item>
           <el-descriptions-item label="权限点">
             <el-tag v-for="p in activePerms" :key="p" size="small" effect="plain" class="perm">{{ p }}</el-tag>
           </el-descriptions-item>
@@ -58,22 +59,26 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { listEmployees, listRoles, type Employee, type Role } from '@/api/employee'
+import { listEmployees, listRoles, type EmployeeVO, type Role } from '@/api/employee'
 
-const employees = ref<Employee[]>([])
+const employees = ref<EmployeeVO[]>([])
 const roles = ref<Role[]>([])
 const loading = ref(false)
 const permVisible = ref(false)
-const activeEmp = ref<Employee | null>(null)
+const activeEmp = ref<EmployeeVO | null>(null)
 const activePerms = ref<string[]>([])
 
+function permList(permissions: string): string[] {
+  if (!permissions) return []
+  return permissions.split(',').map(s => s.trim()).filter(Boolean)
+}
 function roleType(role: string): any {
   return role === '超级管理员' ? 'danger' : role === '店长' ? 'warning' : role === '服务员' ? 'success' : 'info'
 }
-function showPerm(emp: Employee) {
+function showPerm(emp: EmployeeVO) {
   activeEmp.value = emp
-  const r = roles.value.find(x => x.name === emp.role)
-  activePerms.value = r?.permissions.includes('*') ? ['*（全部权限）'] : (r?.permissions || [])
+  const r = roles.value.find(x => x.name === emp.roleName)
+  activePerms.value = r ? permList(r.permissions) : []
   permVisible.value = true
 }
 onMounted(async () => {

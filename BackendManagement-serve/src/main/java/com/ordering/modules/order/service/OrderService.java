@@ -2,6 +2,7 @@ package com.ordering.modules.order.service;
 
 import com.ordering.modules.order.dto.OrderCreateDTO;
 import com.ordering.modules.order.entity.Order;
+import com.ordering.modules.order.vo.OrderAdminDetailVO;
 
 import java.util.List;
 
@@ -27,6 +28,9 @@ public interface OrderService {
 
     /** 取消订单（→9） */
     void cancelOrder(Long shopId, Long id);
+
+    /** 后台订单详情：订单 + 菜品明细 + 支付单 + 会员名 + 桌台号 */
+    OrderAdminDetailVO adminGetOrder(Long shopId, Long id);
 
     /** 顾客端催菜：落库催菜记录（订单须处于制作中/已上菜） */
     void urgeOrder(Long shopId, Long memberId, Long orderId);

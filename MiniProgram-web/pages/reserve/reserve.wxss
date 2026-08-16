@@ -1,3 +1,121 @@
 /* pages/reserve/reserve.wxss */
-.reserve { padding: 16rpx 0; }
-.tip { padding: 24rpx; font-size: 24rpx; }
+page {
+  background-color: #f7f8fa;
+}
+
+.reserve {
+  padding-bottom: 180rpx;
+}
+
+/* 顶部提示 */
+.header {
+  padding: 28rpx 32rpx 12rpx;
+}
+.subtitle {
+  font-size: 28rpx;
+  color: #999;
+}
+
+/* 卡片 */
+.form-card {
+  margin: 24rpx 24rpx 0;
+  background: #ffffff;
+  border-radius: 20rpx;
+  padding: 0 28rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.04);
+}
+
+/* 表单项行 */
+.form-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 136rpx;
+  padding: 18rpx 0;
+  border-bottom: 1rpx solid #f2f3f5;
+}
+.form-row.no-border {
+  border-bottom: none;
+}
+
+/* 左侧信息 */
+.row-left {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+}
+.row-icon {
+  margin-right: 20rpx;
+  flex-shrink: 0;
+}
+.row-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+.row-label {
+  font-size: 30rpx;
+  color: #333333;
+  font-weight: 500;
+}
+.row-value {
+  font-size: 26rpx;
+  color: #666666;
+  margin-top: 8rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.row-value.placeholder {
+  color: #999999;
+}
+.row-value.muted {
+  color: #999999;
+}
+
+/* 右侧操作 */
+.row-action {
+  display: flex;
+  align-items: center;
+  margin-left: 24rpx;
+  flex-shrink: 0;
+}
+.action-text {
+  font-size: 28rpx;
+  color: #e8543f;
+  margin-right: 6rpx;
+}
+
+/* 人数步进器 */
+.party-stepper {
+  --stepper-button-size: 72rpx;
+  --stepper-input-width: 88rpx;
+  --stepper-input-font-size: 32rpx;
+}
+
+/* 提示 */
+.tip {
+  margin: 24rpx 32rpx 0;
+  font-size: 24rpx;
+  color: #999999;
+  line-height: 1.7;
+}
+
+/* 底部提交 */
+.footer {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 24rpx 32rpx calc(24rpx + env(safe-area-inset-bottom));
+  background: #ffffff;
+  box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.04);
+}
+.submit-btn {
+  height: 92rpx !important;
+  font-size: 32rpx !important;
+  border-radius: 46rpx !important;
+  font-weight: 500 !important;
+}

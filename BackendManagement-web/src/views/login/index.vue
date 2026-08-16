@@ -11,7 +11,7 @@
         </el-form-item>
         <el-button type="primary" :loading="loading" class="submit" @click="onSubmit">登录</el-button>
       </el-form>
-      <div class="tip">演示账号：admin / 123456（需后端 /api/admin/auth/login 已就绪）</div>
+      <div class="tip">演示账号：admin / admin123（默认管理员，见后端 application.yml）</div>
     </el-card>
   </div>
 </template>
@@ -27,7 +27,7 @@ const router = useRouter()
 const userStore = useUserStore()
 const formRef = ref()
 const loading = ref(false)
-const form = reactive({ username: 'admin', password: '123456' })
+const form = reactive({ username: 'admin', password: 'admin123' })
 const rules = {
   username: [{ required: true, message: '请输入账号', trigger: 'blur' }],
   password: [{ required: true, message: '请输入密码', trigger: 'blur' }]

@@ -1,30 +1,81 @@
 <!-- pages/reserve/reserve.wxml -->
 <view class="reserve">
-  <van-cell-group>
-    <van-field label="日期" value="{{dates[dateIndex].label}}" readonly clickable disabled>
-      <picker slot="button" mode="selector" range="{{dates}}" range-key="label" value="{{dateIndex}}" bindchange="onDate">
-        <van-button size="mini">选择</van-button>
-      </picker>
-    </van-field>
+  <view class="header">
+    <view class="subtitle">请选择您的到店用餐信息</view>
+  </view>
 
-    <van-field label="时段" value="{{times[timeIndex]}}" readonly disabled>
-      <picker slot="button" mode="selector" range="{{times}}" value="{{timeIndex}}" bindchange="onTime">
-        <van-button size="mini">选择</van-button>
-      </picker>
-    </van-field>
+  <view class="form-card">
+    <!-- 日期 -->
+    <picker mode="selector" range="{{dates}}" range-key="label" value="{{dateIndex}}" bindchange="onDate">
+      <view class="form-row">
+        <view class="row-left">
+          <van-icon name="calendar-o" class="row-icon" color="#e8543f" size="40rpx" />
+          <view class="row-info">
+            <view class="row-label">预约日期</view>
+            <view class="row-value {{dateIndex!=null?'':'placeholder'}}">{{dates[dateIndex].label || '请选择日期'}}</view>
+          </view>
+        </view>
+        <view class="row-action">
+          <text class="action-text">选择</text>
+          <van-icon name="arrow" color="#c8c9cc" size="28rpx" />
+        </view>
+      </view>
+    </picker>
 
-    <van-field label="人数" value="{{party}}" readonly disabled>
-      <van-stepper slot="button" value="{{party}}" min="1" max="20" integer bind:change="onParty" />
-    </van-field>
+    <!-- 时段 -->
+    <picker mode="selector" range="{{times}}" value="{{timeIndex}}" bindchange="onTime">
+      <view class="form-row">
+        <view class="row-left">
+          <van-icon name="clock-o" class="row-icon" color="#e8543f" size="40rpx" />
+          <view class="row-info">
+            <view class="row-label">到店时段</view>
+            <view class="row-value {{timeIndex!=null?'':'placeholder'}}">{{times[timeIndex] || '请选择到店时段'}}</view>
+          </view>
+        </view>
+        <view class="row-action">
+          <text class="action-text">选择</text>
+          <van-icon name="arrow" color="#c8c9cc" size="28rpx" />
+        </view>
+      </view>
+    </picker>
 
-    <van-field label="桌台" value="{{tableIndex!=null ? tables[tableIndex].name : '不指定'}}" readonly clickable disabled>
-      <picker slot="button" mode="selector" range="{{tables}}" range-key="name" value="{{tableIndex}}" bindchange="onTable">
-        <van-button size="mini">选择</van-button>
-      </picker>
-    </van-field>
-  </van-cell-group>
+    <!-- 人数 -->
+    <view class="form-row no-border">
+      <view class="row-left">
+        <van-icon name="friends-o" class="row-icon" color="#e8543f" size="40rpx" />
+        <view class="row-info">
+          <view class="row-label">用餐人数</view>
+          <view class="row-value muted">{{party}} 位</view>
+        </view>
+      </view>
+      <view class="row-action">
+        <van-stepper custom-class="party-stepper" value="{{party}}" min="1" max="20" integer button-size="72rpx" input-width="88rpx" bind:change="onParty" />
+      </view>
+    </view>
+  </view>
 
-  <view class="tip muted">提示：桌台列表由后端「client 桌台接口」实时提供；不指定时由店家分配。</view>
+  <!-- 桌台 -->
+  <view class="form-card">
+    <picker mode="selector" range="{{tables}}" range-key="name" value="{{tableIndex}}" bindchange="onTable">
+      <view class="form-row no-border">
+        <view class="row-left">
+          <van-icon name="location-o" class="row-icon" color="#e8543f" size="40rpx" />
+          <view class="row-info">
+            <view class="row-label">优选桌台</view>
+            <view class="row-value {{tableIndex!=null?'':'placeholder'}}">{{tableIndex!=null ? tables[tableIndex].name : '不指定，由店家分配'}}</view>
+          </view>
+        </view>
+        <view class="row-action">
+          <text class="action-text">选择</text>
+          <van-icon name="arrow" color="#c8c9cc" size="28rpx" />
+        </view>
+      </view>
+    </picker>
+  </view>
 
-  <van-submit-bar price="0" button-text="提交预订" bind:submit="submit" />
+  <view class="tip">未选择桌台时，到店后由店家根据实际情况安排。</view>
+
+  <view class="footer">
+    <van-button custom-class="submit-btn" type="danger" block bind:click="submit">提交预订</van-button>
+  </view>
 </view>

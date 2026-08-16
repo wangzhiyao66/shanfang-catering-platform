@@ -1,0 +1,56 @@
+<!-- pages/home/home.wxml -->
+<view class="home">
+  <!-- 顶部店名 -->
+  <view class="hd">膳房·中餐</view>
+
+  <!-- 搜索入口（点击进入点餐） -->
+  <view class="search" bindtap="goMenu">🔍 搜索菜品 / 套餐</view>
+
+  <!-- 会员日 banner -->
+  <view class="banner">
+    <view class="b-title">周一会员日 全场 8.8 折</view>
+    <view class="b-sub">扫码点餐自动享 · 充值更送 10%</view>
+  </view>
+
+  <!-- 快捷入口 -->
+  <view class="quick">
+    <view class="q-item" bindtap="goMenu">
+      <view class="q-ic">🍽️</view><view class="q-tx">扫码点餐</view>
+    </view>
+    <view class="q-item" bindtap="goMenu">
+      <view class="q-ic">🛵</view><view class="q-tx">外卖</view>
+    </view>
+    <view class="q-item" bindtap="goMenu">
+      <view class="q-ic">🥡</view><view class="q-tx">到店自提</view>
+    </view>
+    <view class="q-item" bindtap="goReserve">
+      <view class="q-ic">📅</view><view class="q-tx">预约订座</view>
+    </view>
+  </view>
+
+  <!-- 店长推荐 -->
+  <view class="sec">
+    <view class="sec-hd">店长推荐<text class="more" bindtap="goMenu">查看全部 ›</text></view>
+    <view class="rec">
+      <view class="rec-card" wx:for="{{recommend}}" wx:key="id"
+            bindtap="goDetail" data-id="{{item.id}}">
+        <image class="rec-img" src="{{item.image}}" mode="aspectFill" />
+        <view class="rec-name">{{item.name}}</view>
+        <view class="rec-price">¥{{item.price}}</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 热销榜 -->
+  <view class="sec">
+    <view class="sec-hd">热销榜</view>
+    <view class="hot">
+      <view class="hot-row" wx:for="{{hot}}" wx:key="id"
+            bindtap="goDetail" data-id="{{item.id}}">
+        <text class="hot-no">{{item.rank}}</text>
+        <text class="hot-name">{{item.name}}</text>
+        <text class="hot-price">¥{{item.price}}</text>
+      </view>
+    </view>
+  </view>
+</view>

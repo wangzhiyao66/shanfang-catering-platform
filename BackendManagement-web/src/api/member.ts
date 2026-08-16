@@ -1,22 +1,35 @@
 import request from '@/utils/request'
 
+/** 会员实体（后台列表，对应后端 GET /api/admin/members） */
 export interface Member {
   id: number
-  name: string
-  phone: string
-  level: string // 普通/银卡/金卡/钻石
-  points: number
-  balance: number // 分
-  totalSpent: number // 分
-  lastVisit: string
+  shopId: number
+  openid?: string
+  phone?: string
+  nickname?: string
+  avatar?: string
+  levelId?: number
+  points?: number
+  balance?: number // 储值余额（分）
+  isBlocked?: number
+  lastActiveAt?: string
 }
-export interface MemberQuery { page?: number; size?: number; keyword?: string; level?: string }
 
-/** 会员列表（分页 + 筛选） */
-export function listMembers(params: MemberQuery): Promise<{ list: Member[]; total: number }> {
-  return request({ url: '/admin/members', method: 'GET', params }) as Promise<{ list: Member[]; total: number }>
+/** 会员列表 */
+export function listMembers(): Promise<Member[]> {
+  return request({ url: '/admin/members', method: 'GET' }) as Promise<Member[]>
 }
-/** 会员详情 */
-export function getMember(id: number): Promise<Member> {
-  return request({ url: `/admin/members/${id}`, method: 'GET' }) as Promise<Member>
+
+/** 会员等级：discount 折扣（0.90 表示 9 折），threshold 升级消费门槛（分）。 */
+export interface MemberLevel {
+  id: number
+  shopId: number
+  name: string
+  discount?: number
+  threshold?: number
+}
+
+/** 会员等级列表 */
+export function listMemberLevels(): Promise<MemberLevel[]> {
+  return request({ url: '/admin/member/levels', method: 'GET' }) as Promise<MemberLevel[]>
 }
