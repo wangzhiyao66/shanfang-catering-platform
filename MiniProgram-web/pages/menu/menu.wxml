@@ -1,38 +1,69 @@
-<!-- pages/menu/menu.wxml -->
-<view class="menu page-pad">
-  <!-- 左侧分类 -->
-  <scroll-view scroll-y class="side">
-    <view wx:for="{{categories}}" wx:key="id"
-          class="side-item {{activeCategory===index?'active':''}}"
-          bindtap="selectCategory" data-index="{{index}}">
-      {{item.name}}
-    </view>
-  </scroll-view>
+<!-- pages/menu/menu.wxml —— 对齐原型 mp-menu 屏：红顶栏(桌号+购物车角标) + 左右分栏 + 圆形+直加 + 深色结算条 -->
+<wxs module="fmt">
+module.exports = {
+  money: function (fen) {
+    if (fen === null || fen === undefined) return '0';
+    var v = fen / 100;
+    return v % 1 === 0 ? '' + v : v.toFixed(2);
+  }
+};
+</wxs>
 
-  <!-- 右侧菜品 -->
-  <scroll-view scroll-y class="main">
-    <view wx:for="{{dishes}}" wx:key="id" class="dish">
-      <view class="dish-img">{{item.name[0]}}</view>
-      <view class="dish-info">
-        <view class="dish-name">{{item.name}}</view>
-        <view class="dish-meta">
-          <text wx:if="{{item.description}}" class="desc">{{item.description}}</text>
-          <van-tag wx:if="{{item.isSoldOut===1}}" plain type="danger">售罄</van-tag>
-        </view>
-        <view class="dish-bottom">
-          <text class="price dish-price">{{item.price/100}}</text>
-          <van-button size="mini" type="primary" bindtap="goDetail" data-id="{{item.id}}">选规格</van-button>
-        </view>
+<view class="menu">
+  <!-- 顶部红色栏：左桌号 · 扫码点餐；右购物车角标（右侧留出胶囊按钮空间） -->
+  <view class="menu-top">
+    <view style="height:{{statusBarHeight}}px"></view>
+    <view class="top-bar">
+      <text class="table-no" wx:if="{{tableName}}">{{tableName}} 桌 · 扫码点餐</text>
+      <text class="table-no" wx:else>扫码点餐</text>
+      <view class="top-cart" bindtap="goCart">
+        <van-icon name="shopping-cart-o" color="#ffffff" size="22px" />
+        <view class="badge" wx:if="{{cartCount>0}}">{{cartCount}}</view>
       </view>
     </view>
-    <van-empty wx:if="{{dishes.length===0}}" description="该分类暂无可点菜品" />
-  </scroll-view>
+  </view>
+
+  <!-- 中部：左侧分类 + 右侧菜品 -->
+  <view class="menu-body">
+    <scroll-view scroll-y class="side">
+      <view wx:for="{{categories}}" wx:key="id"
+            class="side-item {{activeCategory===index?'active':''}}"
+            bindtap="selectCategory" data-index="{{index}}">
+        {{item.name}}
+      </view>
+    </scroll-view>
+
+    <scroll-view scroll-y class="main">
+      <view wx:for="{{dishes}}" wx:key="id" class="dish" bindtap="goDetail" data-id="{{item.id}}">
+        <image wx:if="{{item.image}}" class="dish-img" src="{{item.image}}" mode="aspectFill" />
+        <view wx:else class="dish-img">{{item.name[0]}}</view>
+        <view class="dish-info">
+          <view class="dish-name">{{item.name}}</view>
+          <view class="dish-meta">
+            <text wx:if="{{item.description}}" class="desc">{{item.description}}</text>
+            <van-tag wx:if="{{item.isSoldOut===1}}" plain type="danger">售罄</van-tag>
+          </view>
+          <view class="dish-bottom">
+            <text class="price dish-price">{{fmt.money(item.price)}}</text>
+            <view class="stepper" wx:if="{{item.isSoldOut!==1}}">
+              <view class="step-btn minus" wx:if="{{cartQty[item.id]}}" catchtap="minusCart" data-id="{{item.id}}">−</view>
+              <text class="step-num" wx:if="{{cartQty[item.id]}}">{{cartQty[item.id]}}</text>
+              <view class="step-btn plus" catchtap="addToCart" data-id="{{item.id}}">+</view>
+            </view>
+          </view>
+        </view>
+      </view>
+      <van-empty wx:if="{{dishes.length===0}}" description="该分类暂无可点菜品" />
+    </scroll-view>
+  </view>
 
   <!-- 底部购物车条 -->
   <view class="cart-bar">
     <view class="cart-left" bindtap="goCart">
-      <text class="cart-count">已点 {{cartCount}} 件</text>
-      <text class="cart-amount"><text class="price">{{cartTotal/100}}</text></text>
+      <text class="cart-label">已点</text>
+      <text class="cart-num">{{cartCount}}</text>
+      <text class="cart-label">件</text>
+      <text class="cart-amount"><text class="price">{{fmt.money(cartTotal)}}</text></text>
     </view>
     <view class="cart-actions">
       <van-button custom-class="bar-btn" bindtap="goCart">去结算</van-button>

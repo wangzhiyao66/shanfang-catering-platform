@@ -28,7 +28,7 @@ function authHeader() {
 
 function baseURL() {
   const app = appInstance();
-  return (app && app.globalData.baseURL) || 'http://localhost:3000/api/client';
+  return (app && app.globalData.baseURL) || 'http://192.168.1.198:3000/api/client';
 }
 
 // 底层请求：返回 { statusCode, body }

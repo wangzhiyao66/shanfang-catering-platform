@@ -1,20 +1,119 @@
-/* pages/menu/menu.wxss */
-.menu { display: flex; height: 100vh; box-sizing: border-box; padding-bottom: 340rpx; }
+/* pages/menu/menu.wxss —— 对齐原型 mp-menu 屏视觉 */
+.menu {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  box-sizing: border-box;
+  background: #f6f7f9;
+}
 
+/* ===== 顶部红色栏（自定义导航） ===== */
+.menu-top { background: var(--brand); flex-shrink: 0; }
+.top-bar {
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  /* 右侧留出微信胶囊按钮空间（胶囊宽约 87px + 右边距） */
+  padding: 0 200rpx 0 28rpx;
+  box-sizing: border-box;
+}
+.table-no { color: #fff; font-size: 30rpx; font-weight: 700; }
+.top-cart { position: relative; width: 64rpx; height: 64rpx; display: flex; align-items: center; justify-content: center; }
+.top-cart .badge {
+  position: absolute;
+  top: -2rpx;
+  right: -10rpx;
+  min-width: 32rpx;
+  height: 32rpx;
+  line-height: 32rpx;
+  padding: 0 8rpx;
+  border-radius: 16rpx;
+  background: #fff;
+  color: var(--brand);
+  font-size: 20rpx;
+  font-weight: 700;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+/* ===== 中部左右分栏 ===== */
+.menu-body {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+  /* 预留底部购物车条 112rpx + tabBar 100rpx + 安全区 */
+  padding-bottom: calc(212rpx + env(safe-area-inset-bottom));
+  box-sizing: border-box;
+}
+
+/* 左侧分类栏 —— 对齐原型 .cats：#f0f1f3 底、选中白底红字加粗 + 左指示条 */
 .side { width: 180rpx; background: #f0f1f3; height: 100%; }
-.side-item { padding: 32rpx 16rpx; font-size: 26rpx; color: #333; text-align: center; }
-.side-item.active { background: #fff; color: var(--brand); font-weight: 600; border-left: 6rpx solid var(--brand); }
+.side-item {
+  padding: 32rpx 16rpx;
+  font-size: 26rpx;
+  color: #555;
+  text-align: center;
+  border-left: 6rpx solid transparent; /* 占位避免选中时宽度抖动 */
+}
+.side-item.active {
+  background: #fff;
+  color: var(--brand);
+  font-weight: 700;
+  border-left-color: var(--brand);
+}
 
-.main { flex: 1; height: 100%; padding: 16rpx; background: #fff; }
-.dish { display: flex; padding: 20rpx 0; border-bottom: 1rpx solid var(--line); }
-.dish-img { width: 120rpx; height: 120rpx; border-radius: 12rpx; background: var(--brand-soft); color: var(--brand); font-size: 48rpx; font-weight: 700; display: flex; align-items: center; justify-content: center; margin-right: 18rpx; }
-.dish-info { flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
-.dish-name { font-size: 30rpx; font-weight: 600; }
-.dish-meta { display: flex; align-items: center; gap: 10rpx; }
-.dish-price { font-size: 32rpx; }
-.dish-actions { display: flex; justify-content: flex-end; }
+/* 右侧菜品列表 —— 对齐原型 .dish：灰底透出、#f1f2f4 分隔线 */
+.main { flex: 1; height: 100%; padding: 16rpx 20rpx; box-sizing: border-box; }
+.dish { display: flex; padding: 20rpx 0; border-bottom: 1rpx solid #f1f2f4; }
+.dish-img {
+  width: 124rpx;
+  height: 124rpx;
+  border-radius: 20rpx;               /* 原型 10px */
+  background: #ffe2d4;                /* 原型暖橙占位底 */
+  color: var(--brand);
+  font-size: 48rpx;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 20rpx;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+.dish-info { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: space-between; }
+.dish-name { font-size: 28rpx; font-weight: 700; }        /* 原型 14px/700 */
+.dish-meta { display: flex; align-items: center; gap: 10rpx; min-width: 0; }
+.desc {
+  flex: 1;
+  min-width: 0;
+  font-size: 22rpx;                   /* 原型 11px */
+  color: #9aa0a8;                     /* 原型次要文字色 */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dish-bottom { display: flex; align-items: center; justify-content: space-between; }
+.dish-price { font-size: 28rpx; }                          /* 原型 14px */
 
-/* 底部购物车条 —— 对齐原型 .cartbar（通栏深色 + 左侧“已点 N 件 ¥X” + 右侧品牌红“去结算”） */
+/* 圆形 + 步进器 —— 对齐原型 26px 正圆直加按钮 */
+.stepper { display: flex; align-items: center; gap: 12rpx; }
+.step-btn {
+  width: 52rpx;
+  height: 52rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 34rpx;
+  line-height: 1;
+  box-sizing: border-box;
+}
+.step-btn.plus { background: var(--brand); color: #fff; font-weight: 600; }
+.step-btn.minus { background: #fff; border: 1rpx solid var(--brand); color: var(--brand); font-weight: 600; }
+.step-num { min-width: 40rpx; text-align: center; font-size: 28rpx; font-weight: 600; }
+
+/* ===== 底部购物车条 —— 对齐原型 .cartbar ===== */
 .cart-bar {
   position: fixed;
   left: 0;
@@ -30,39 +129,18 @@
   box-shadow: 0 -4rpx 16rpx rgba(0, 0, 0, 0.12);
   z-index: 100;
 }
-.cart-left {
-  display: flex;
-  align-items: baseline;
-  gap: 16rpx;
-}
-.cart-count {
-  font-size: 26rpx;
-  color: #fff;
-}
-.cart-amount {
-  font-size: 34rpx;
-  font-weight: 700;
-  color: #ff9d5c;
-}
-.cart-amount .price {
-  color: #ff9d5c;
-  font-size: 34rpx;
-  font-weight: 700;
-}
-.cart-amount .price::before {
-  font-size: 22rpx;
-  color: #ff9d5c;
-  margin-right: 2rpx;
-}
-.cart-actions {
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-}
+.cart-left { display: flex; align-items: baseline; gap: 8rpx; }
+.cart-label { font-size: 26rpx; color: #fff; }
+/* 原型：件数与金额同为橙色加粗 17px */
+.cart-num { font-size: 34rpx; font-weight: 700; color: #ff9d5c; }
+.cart-amount { font-size: 34rpx; font-weight: 700; color: #ff9d5c; margin-left: 8rpx; }
+.cart-amount .price { color: #ff9d5c; font-size: 34rpx; font-weight: 700; }
+.cart-amount .price::before { font-size: 22rpx; color: #ff9d5c; margin-right: 2rpx; }
+.cart-actions { display: flex; align-items: center; flex-shrink: 0; }
 .bar-btn {
   height: 72rpx !important;
   min-width: 180rpx !important;
-  border-radius: 36rpx !important;
+  border-radius: 40rpx !important;
   font-size: 28rpx !important;
   font-weight: 600 !important;
   margin-left: 0 !important;
